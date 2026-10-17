@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   MapPin, 
@@ -8,14 +8,22 @@ import {
   CheckCircle2, 
   Copy, 
   Check, 
-  ExternalLink,
-  ShieldAlert,
-  Loader2,
-  Image as ImageIcon,
-  Flame,
-  AlertCircle
+  ExternalLink, 
+  ShieldAlert, 
+  Loader2, 
+  Camera, 
+  Flame, 
+  Zap, 
+  Droplets, 
+  Construction, 
+  Crosshair, 
+  Layers,
+  Sparkles
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
 import { api } from '../services/api.js';
+import { soundFx } from '../services/soundFx.js';
 
 const CATEGORIES = [
   'Fallen Electrical Cable',
@@ -26,6 +34,53 @@ const CATEGORIES = [
   'Other Infrastructure Hazard'
 ];
 
+const PRESET_ZONES = [
+  { name: 'Central Metro Exit', landmark: 'Front of Metro Station Gate 2', area: 'Downtown Core', lat: 37.7749, lng: -122.4194 },
+  { name: 'Substation Overpass', landmark: 'Under elevated power lines, 4th Ave', area: 'East Utility Corridor', lat: 37.7833, lng: -122.4167 },
+  { name: 'Riverfront Ward 4', landmark: 'Corner of Riverside Promenade & Elm St', area: 'South District', lat: 37.7650, lng: -122.4200 },
+  { name: 'Highway 101 Overpass', landmark: 'Off-ramp bridge lane 1', area: 'West Freeway Sector', lat: 37.7550, lng: -122.4050 },
+  { name: 'Tech Park Sector 7', landmark: 'Main boulevard roundabout', area: 'Innovation District', lat: 37.7890, lng: -122.4010 }
+];
+
+const SAMPLE_EVIDENCE_PHOTOS = [
+  { label: 'Dangling Wire', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80' },
+  { label: 'Burst Main Flood', url: 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=600&auto=format&fit=crop&q=80' },
+  { label: 'Broken Asphalt', url: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=80' }
+];
+
+// Interactive Map Click Handler component for Leaflet
+function MapPinPicker({ position, onPositionChange }) {
+  const map = useMapEvents({
+    click(e) {
+      soundFx.playClick();
+      onPositionChange(e.latlng.lat, e.latlng.lng);
+      map.flyTo(e.latlng, map.getZoom(), { duration: 0.5 });
+    }
+  });
+
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, map.getZoom(), { duration: 0.5 });
+    }
+  }, [position, map]);
+
+  if (!position) return null;
+
+  const pinIcon = L.divIcon({
+    html: `
+      <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background: #06b6d4; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="position: relative; width: 16px; height: 16px; border-radius: 50%; background: #06b6d4; border: 3px solid #ffffff; box-shadow: 0 0 14px #06b6d4;"></div>
+      </div>
+    `,
+    className: 'custom-picker-pin',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
+
+  return <Marker position={position} icon={pinIcon} />;
+}
+
 export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIncident }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -33,8 +88,8 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
     description: '',
     landmark: '',
     area: '',
-    latitude: '',
-    longitude: '',
+    latitude: '37.7749',
+    longitude: '-122.4194',
     urgency: 'Medium',
     photo_url: '',
     reporter_contact: ''
@@ -52,33 +107,62 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
   // Handle browser geolocation
   const handleGetLocation = () => {
+    soundFx.playClick();
     setGeoLoading(true);
     setGeoError('');
 
     if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported by your browser. Please enter landmark manually.');
+      setGeoError('Geolocation is not supported by your browser.');
       setGeoLoading(false);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        soundFx.playRadioChirp();
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
         setFormData(prev => ({
           ...prev,
-          latitude: pos.coords.latitude.toFixed(6),
-          longitude: pos.coords.longitude.toFixed(6)
+          latitude: lat,
+          longitude: lng,
+          landmark: prev.landmark || 'Current User GPS Location',
+          area: prev.area || 'Metro Area Zone'
         }));
         setGeoLoading(false);
       },
       (err) => {
-        let msg = 'Location permission denied. Please enter landmark and area manually.';
-        if (err.code === 2) msg = 'Location unavailable. Please enter landmark and area manually.';
-        if (err.code === 3) msg = 'Location request timed out. Please enter landmark manually.';
-        setGeoError(msg);
+        setGeoError('GPS unavailable. Click anywhere on the radar map to drop pin.');
         setGeoLoading(false);
       },
-      { timeout: 10000, enableHighAccuracy: true }
+      { timeout: 8000, enableHighAccuracy: true }
     );
+  };
+
+  const handleSelectPresetZone = (zone) => {
+    soundFx.playRadioChirp();
+    setFormData(prev => ({
+      ...prev,
+      landmark: zone.landmark,
+      area: zone.area,
+      latitude: zone.lat.toFixed(6),
+      longitude: zone.lng.toFixed(6)
+    }));
+  };
+
+  const handleMapPinChange = (lat, lng) => {
+    setFormData(prev => ({
+      ...prev,
+      latitude: lat.toFixed(6),
+      longitude: lng.toFixed(6),
+      landmark: prev.landmark || `Hazard Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+      area: prev.area || 'Geotagged Sector'
+    }));
+  };
+
+  const handleUrgencyChange = (level) => {
+    soundFx.playClick();
+    setFormData(prev => ({ ...prev, urgency: level }));
   };
 
   // Handle local image file upload & convert to base64 DataURL preview
@@ -98,6 +182,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
     const reader = new FileReader();
     reader.onloadend = () => {
+      soundFx.playClick();
       setFormData(prev => ({ ...prev, photo_url: reader.result }));
     };
     reader.readAsDataURL(file);
@@ -113,10 +198,10 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
       errs.description = 'Please describe the hazard in detail (at least 10 characters).';
     }
     if (!formData.landmark.trim() || formData.landmark.trim().length < 3) {
-      errs.landmark = 'Location landmark is required (e.g., Near City Hall Metro Exit 2).';
+      errs.landmark = 'Location landmark is required (or click the mini-map).';
     }
     if (!formData.area.trim() || formData.area.trim().length < 2) {
-      errs.area = 'Area or sector is required (e.g., Downtown Ward 4).';
+      errs.area = 'Area or sector is required.';
     }
     setValidationErrors(errs);
     return Object.keys(errs).length === 0;
@@ -125,7 +210,10 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
   // Submit report to backend
   const handleSubmit = async (e, forceSubmit = false) => {
     if (e) e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      soundFx.playAlert();
+      return;
+    }
 
     setLoading(true);
     setDuplicateWarning(null);
@@ -137,10 +225,11 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
       };
 
       const res = await api.createIncident(payload);
+      soundFx.playSuccess();
       setSubmissionSuccess(res.data);
       if (onSuccess) onSuccess(res.data);
     } catch (err) {
-      // Check if backend flagged duplicate
+      soundFx.playAlert();
       if (err.status === 409 && err.data?.isDuplicate) {
         setDuplicateWarning(err.data);
       } else {
@@ -151,16 +240,17 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
     }
   };
 
-  // Copy reference ID to clipboard
   const handleCopyId = () => {
     if (submissionSuccess?.reference_id) {
       navigator.clipboard.writeText(submissionSuccess.reference_id);
+      soundFx.playClick();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleResetAndClose = () => {
+    soundFx.playClick();
     setSubmissionSuccess(null);
     setDuplicateWarning(null);
     setFormData({
@@ -169,8 +259,8 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
       description: '',
       landmark: '',
       area: '',
-      latitude: '',
-      longitude: '',
+      latitude: '37.7749',
+      longitude: '-122.4194',
       urgency: 'Medium',
       photo_url: '',
       reporter_contact: ''
@@ -179,89 +269,102 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
     onClose();
   };
 
+  const currentPinPosition = [
+    parseFloat(formData.latitude) || 37.7749,
+    parseFloat(formData.longitude) || -122.4194
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-[#111726] rounded-lg shadow-2xl border border-[#1e293b] text-white overflow-hidden my-6">
         
         {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-between">
+        <div className="px-5 py-3.5 bg-[#0d131f] border-b border-[#1e293b] flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-teal-500/20 border border-teal-500/40 rounded-xl">
-              <ShieldAlert className="w-6 h-6 text-teal-400" />
+            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-md text-blue-400">
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-lg font-bold brand-font">Report Municipal Hazard</h2>
-              <p className="text-xs text-slate-300">
-                Official citizen dispatch line. Fast triage for public utility emergencies.
-              </p>
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-800/60">
+                  Citizen Hazard Intake
+                </span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              </div>
+              <h2 className="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+                Report Infrastructure Hazard
+              </h2>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
-            className="p-1.5 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-5 sm:p-6 max-h-[82vh] overflow-y-auto space-y-5">
           
           {/* ============================================================== */}
-          {/* SUBMISSION CONFIRMATION SCREEN */}
+          {/* SUCCESS SCREEN */}
           {/* ============================================================== */}
           {submissionSuccess ? (
             <div className="text-center py-6 space-y-5">
-              <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto shadow-md">
-                <CheckCircle2 className="w-10 h-10" />
+              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-6 h-6" />
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-slate-900 brand-font">
-                  Hazard Report Dispatched!
+                <span className="text-[11px] uppercase font-mono font-bold tracking-wider text-emerald-400">
+                  ✓ Dispatch Confirmed & Logged
+                </span>
+                <h3 className="text-lg font-bold text-slate-100 mt-1">
+                  Incident Submitted to Municipal Dispatch
                 </h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                  Your incident has been registered in the municipal database and prioritized for field crew deployment.
+                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+                  Your hazard report has been recorded in the central municipal incident database and assigned to active field triage.
                 </p>
               </div>
 
               {/* Reference ID Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 max-w-md mx-auto space-y-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Your Official Incident Reference ID
+              <div className="bg-[#0b0f17] border border-[#1e293b] rounded-lg p-4 max-w-md mx-auto space-y-2">
+                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+                  Official Tracking Reference Code
                 </span>
                 <div className="flex items-center justify-center space-x-3">
-                  <span className="text-2xl font-mono font-extrabold text-teal-700 tracking-wider">
+                  <span className="text-2xl font-mono font-bold text-blue-400 tracking-wider">
                     {submissionSuccess.reference_id}
                   </span>
                   <button
                     onClick={handleCopyId}
-                    className="p-2 text-slate-500 hover:text-slate-800 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors shadow-xs"
+                    className="p-1.5 text-slate-300 hover:text-white bg-[#111726] border border-[#1e293b] rounded-md hover:bg-[#1e293b] transition-colors"
                     title="Copy Reference ID"
                   >
-                    {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Save this reference code to track live crew arrival & resolution notes.
+                  Save this code to check real-time field crew deployment and photographic repair confirmation.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
                 <button
                   onClick={() => {
                     const inc = submissionSuccess;
                     handleResetAndClose();
                     if (onViewIncident) onViewIncident(inc);
                   }}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors"
                 >
-                  <span>Track Status Now</span>
-                  <ExternalLink className="w-4 h-4" />
+                  <span>Track Status Pipeline Now</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={handleResetAndClose}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#0b0f17] hover:bg-[#1e293b] text-slate-300 font-medium rounded-md text-xs border border-[#1e293b] transition-colors"
                 >
                   Return to Dashboard
                 </button>
@@ -269,33 +372,33 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
             </div>
           ) : (
             /* ============================================================== */
-            /* REPORT SUBMISSION FORM */
+            /* INTERACTIVE SUBMISSION FORM */
             /* ============================================================== */
             <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4">
 
-              {/* DUPLICATE WARNING MODAL INTERSTITIAL */}
+              {/* DUPLICATE WARNING INTERSTITIAL */}
               {duplicateWarning && (
-                <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl space-y-3 animate-fade-in">
+                <div className="p-4 bg-amber-950/40 border border-amber-500/50 rounded-2xl space-y-3">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-xs font-bold text-amber-900">
-                        Possible Duplicate Report Detected
+                      <h4 className="text-xs font-bold text-amber-300">
+                        Active Incident Already Under Review at this Site
                       </h4>
-                      <p className="text-xs text-amber-800 mt-0.5">
+                      <p className="text-xs text-amber-200/90 mt-0.5">
                         {duplicateWarning.reason}
                       </p>
                     </div>
                   </div>
 
                   {duplicateWarning.existingIncident && (
-                    <div className="p-3 bg-white/90 border border-amber-200 rounded-xl text-xs space-y-1">
-                      <div className="flex justify-between font-mono font-bold text-slate-700">
+                    <div className="p-3 bg-slate-950/80 border border-amber-500/30 rounded-xl text-xs space-y-1">
+                      <div className="flex justify-between font-mono font-bold text-amber-300">
                         <span>Ref: {duplicateWarning.existingIncident.reference_id}</span>
-                        <span className="text-amber-700">{duplicateWarning.existingIncident.status}</span>
+                        <span className="text-slate-300">{duplicateWarning.existingIncident.status}</span>
                       </div>
-                      <p className="font-semibold text-slate-800">{duplicateWarning.existingIncident.title}</p>
-                      <p className="text-slate-500">{duplicateWarning.existingIncident.landmark}, {duplicateWarning.existingIncident.area}</p>
+                      <p className="font-semibold text-white">{duplicateWarning.existingIncident.title}</p>
+                      <p className="text-slate-400">{duplicateWarning.existingIncident.landmark}, {duplicateWarning.existingIncident.area}</p>
                     </div>
                   )}
 
@@ -307,14 +410,14 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                         handleResetAndClose();
                         if (onViewIncident && target) onViewIncident(target);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg text-xs transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg text-xs transition-colors"
                     >
                       View Existing Report
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSubmit(null, true)}
-                      className="w-full sm:w-auto px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium rounded-lg text-xs transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg text-xs border border-slate-700 transition-colors"
                     >
                       Submit Anyway (Separate Incident)
                     </button>
@@ -324,33 +427,36 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* 1. Hazard Title */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Hazard Title <span className="text-rose-500">*</span>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Hazard Headline <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., Live wire dangling over bus stop on 4th street"
+                  placeholder="e.g., Live electrical cable fallen across sidewalk"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all ${
-                    validationErrors.title ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
+                  className={`w-full px-3 py-2 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all ${
+                    validationErrors.title ? 'border-rose-500 bg-rose-950/20' : 'border-[#1e293b]'
                   }`}
                 />
                 {validationErrors.title && (
-                  <p className="text-[11px] text-rose-500 mt-1">{validationErrors.title}</p>
+                  <p className="text-[11px] text-rose-400 mt-1">{validationErrors.title}</p>
                 )}
               </div>
 
-              {/* 2. Category & Urgency Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 2. Category & Urgency Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Hazard Category <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Hazard Classification <span className="text-rose-400">*</span>
                   </label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white"
+                    onChange={(e) => {
+                      soundFx.playClick();
+                      setFormData({ ...formData, category: e.target.value });
+                    }}
+                    className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0b0f17] text-xs text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   >
                     {CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -359,26 +465,32 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Urgency Level <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center justify-between">
+                    <span>Urgency Level <span className="text-rose-400">*</span></span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {formData.urgency === 'Critical' ? 'Immediate Threat' : formData.urgency === 'Medium' ? 'High Priority' : 'Standard Queue'}
+                    </span>
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     {['Low', 'Medium', 'Critical'].map((level) => {
                       const isSelected = formData.urgency === level;
                       let activeStyle = '';
-                      if (level === 'Critical') activeStyle = 'bg-rose-600 text-white border-rose-600';
-                      if (level === 'Medium') activeStyle = 'bg-amber-500 text-white border-amber-500';
-                      if (level === 'Low') activeStyle = 'bg-sky-500 text-white border-sky-500';
+                      if (level === 'Critical') activeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/80';
+                      if (level === 'Medium') activeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/80';
+                      if (level === 'Low') activeStyle = 'bg-blue-500/20 text-blue-300 border-blue-500/80';
 
                       return (
                         <button
                           key={level}
                           type="button"
-                          onClick={() => setFormData({ ...formData, urgency: level })}
-                          className={`py-2 text-xs font-semibold rounded-xl border transition-all ${
+                          onClick={() => {
+                            soundFx.playClick();
+                            setFormData({ ...formData, urgency: level });
+                          }}
+                          className={`py-1.5 px-2 rounded-md text-xs font-medium border transition-colors ${
                             isSelected
                               ? activeStyle
-                              : 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                              : 'bg-[#0b0f17] border-[#1e293b] text-slate-400 hover:text-slate-200 hover:border-slate-700'
                           }`}
                         >
                           {level}
@@ -389,134 +501,175 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
               </div>
 
-              {/* 3. Detailed Description */}
+              {/* 3. Description */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Detailed Description <span className="text-rose-500">*</span>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Incident Conditions & Threats to Public <span className="text-rose-400">*</span>
                 </label>
                 <textarea
                   rows="3"
-                  placeholder="Describe severity, hazards to pedestrian/vehicle traffic, active leaks, sparking wires, or safety barricades needed..."
+                  placeholder="Detail exact conditions: exposed wiring, sparking, flooding onto roadway, open deep manhole, or obstructed lanes..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl border text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all ${
-                    validationErrors.description ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
+                  className={`w-full px-3 py-2 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all ${
+                    validationErrors.description ? 'border-rose-500 bg-rose-950/20' : 'border-[#1e293b]'
                   }`}
                 />
                 {validationErrors.description && (
-                  <p className="text-[11px] text-rose-500 mt-0.5">{validationErrors.description}</p>
+                  <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.description}</p>
                 )}
               </div>
 
-              {/* 4. Location Landmark & Area/Sector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Location Landmark <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., In front of Central Metro Station Exit 2"
-                    value={formData.landmark}
-                    onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all ${
-                      validationErrors.landmark ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
-                    }`}
-                  />
-                  {validationErrors.landmark && (
-                    <p className="text-[11px] text-rose-500 mt-0.5">{validationErrors.landmark}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Area / Sector / Ward <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Downtown Sector 4 / Ward 12"
-                    value={formData.area}
-                    onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all ${
-                      validationErrors.area ? 'border-rose-400 bg-rose-50/50' : 'border-slate-300'
-                    }`}
-                  />
-                  {validationErrors.area && (
-                    <p className="text-[11px] text-rose-500 mt-0.5">{validationErrors.area}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 5. Geolocation / GPS Coordinates */}
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 flex items-center space-x-1.5">
-                    <Navigation className="w-3.5 h-3.5 text-teal-600" />
-                    <span>GPS Coordinates (Optional for Map Pin)</span>
-                  </span>
+              {/* 4. Interactive Leaflet Mini Pin-Picker Map */}
+              <div className="p-3.5 bg-[#0b0f17] rounded-md border border-[#1e293b] space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <Crosshair className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-xs font-medium text-slate-200">Incident Coordinate Pinning</span>
+                    <span className="text-[10px] text-slate-500">(Click on map to drop precise pin)</span>
+                  </div>
 
                   <button
                     type="button"
                     onClick={handleGetLocation}
                     disabled={geoLoading}
-                    className="flex items-center space-x-1 text-xs font-semibold text-teal-600 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-3 py-1 rounded-lg transition-colors"
+                    className="flex items-center space-x-1.5 text-xs font-medium text-blue-300 hover:text-white bg-[#111726] hover:bg-[#1e293b] border border-[#1e293b] px-2.5 py-1 rounded-md transition-colors"
                   >
                     {geoLoading ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Detecting GPS...</span>
+                        <span>Detecting...</span>
                       </>
                     ) : (
                       <>
-                        <Navigation className="w-3.5 h-3.5" />
+                        <Navigation className="w-3.5 h-3.5 text-blue-400" />
                         <span>Use My Location</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Latitude (e.g. 40.7128)"
-                    value={formData.latitude}
-                    onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                    className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="Longitude (e.g. -74.0060)"
-                    value={formData.longitude}
-                    onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                    className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-teal-500 focus:outline-none"
-                  />
+                {/* Quick Zone Presets */}
+                <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold mr-1">Quick Sectors:</span>
+                  {PRESET_ZONES.map((zone) => (
+                    <button
+                      key={zone.name}
+                      type="button"
+                      onClick={() => handleSelectPresetZone(zone)}
+                      className="text-[11px] px-2 py-0.5 rounded bg-[#111726] hover:bg-[#1e293b] text-slate-300 hover:text-blue-300 border border-[#1e293b] transition-colors"
+                    >
+                      {zone.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mini Leaflet Pin Dropper */}
+                <div className="h-44 sm:h-48 w-full rounded-md overflow-hidden border border-[#1e293b] relative shadow-inner">
+                  <MapContainer
+                    center={currentPinPosition}
+                    zoom={13}
+                    scrollWheelZoom={false}
+                    className="h-full w-full"
+                    style={{ background: '#070d19' }}
+                  >
+                    <TileLayer
+                      url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                      attribution="&copy; Google Satellite"
+                    />
+                    <MapPinPicker
+                      position={currentPinPosition}
+                      onPositionChange={handleMapPinChange}
+                    />
+                  </MapContainer>
+                  
+                  <div className="absolute bottom-2 left-2 z-[400] bg-slate-950/90 px-2 py-1 rounded border border-[#1e293b] text-[10px] font-mono text-blue-300 flex items-center space-x-1.5">
+                    <MapPin className="w-3 h-3 text-blue-400" />
+                    <span>Lat: {formData.latitude} | Lng: {formData.longitude}</span>
+                  </div>
                 </div>
 
                 {geoError && (
-                  <p className="text-[11px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
-                    ℹ️ {geoError}
+                  <p className="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-900/50">
+                    {geoError}
                   </p>
                 )}
+
+                {/* Landmark & Area text inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                      Street / Landmark <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Near City Hall Metro Exit 2"
+                      value={formData.landmark}
+                      onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                      className={`w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all ${
+                        validationErrors.landmark ? 'border-rose-500' : 'border-[#1e293b]'
+                      }`}
+                    />
+                    {validationErrors.landmark && (
+                      <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.landmark}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                      Sector / Ward <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Downtown Sector 4"
+                      value={formData.area}
+                      onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                      className={`w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all ${
+                        validationErrors.area ? 'border-rose-500' : 'border-[#1e293b]'
+                      }`}
+                    />
+                    {validationErrors.area && (
+                      <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.area}</p>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* 6. Photo URL or File Upload */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Evidence Photo (Upload or Image URL)
+              {/* 5. Photo Evidence with Sample Presets */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-slate-300">
+                  Visual Evidence Photo
                 </label>
-                <div className="flex items-center space-x-3">
+
+                {/* Quick Presets */}
+                <div className="flex items-center flex-wrap gap-1.5 mb-1.5">
+                  <span className="text-[10px] text-slate-500">Sample Photos:</span>
+                  {SAMPLE_EVIDENCE_PHOTOS.map((sample) => (
+                    <button
+                      key={sample.label}
+                      type="button"
+                      onClick={() => {
+                        soundFx.playClick();
+                        setFormData({ ...formData, photo_url: sample.url });
+                      }}
+                      className="text-[11px] px-2 py-0.5 rounded bg-[#0b0f17] hover:bg-[#1e293b] text-slate-400 hover:text-slate-200 border border-[#1e293b] transition-colors"
+                    >
+                      {sample.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center space-x-2">
                   <input
                     type="text"
-                    placeholder="Paste public image URL (https://...)"
+                    placeholder="Paste image URL (https://...)"
                     value={formData.photo_url}
                     onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                    className="flex-1 px-3 py-1.5 rounded-md bg-[#0b0f17] border border-[#1e293b] text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   />
                   
-                  <label className="cursor-pointer px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 flex items-center space-x-1.5 transition-colors">
-                    <Upload className="w-4 h-4 text-slate-500" />
+                  <label className="cursor-pointer px-3 py-1.5 bg-[#111726] hover:bg-[#1e293b] border border-[#1e293b] rounded-md text-xs font-medium text-slate-200 flex items-center space-x-1.5 transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-blue-400" />
                     <span>Upload</span>
                     <input
                       type="file"
@@ -528,7 +681,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 {formData.photo_url && (
-                  <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border border-slate-300 group">
+                  <div className="mt-2 relative w-24 h-20 rounded-md overflow-hidden border border-[#1e293b] group shadow-sm">
                     <img
                       src={formData.photo_url}
                       alt="Preview"
@@ -536,8 +689,11 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                     />
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, photo_url: '' })}
-                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-full hover:bg-rose-600 transition-colors"
+                      onClick={() => {
+                        soundFx.playClick();
+                        setFormData({ ...formData, photo_url: '' });
+                      }}
+                      className="absolute top-1 right-1 p-1 bg-black/75 text-white rounded hover:bg-rose-600 transition-colors"
                       title="Remove image"
                     >
                       <X className="w-3 h-3" />
@@ -546,41 +702,41 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 )}
               </div>
 
-              {/* 7. Reporter Optional Contact */}
+              {/* 6. Reporter Contact */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Contact Phone / Email (Optional for Dispatch SMS updates)
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Reporter Contact (Optional for Dispatch SMS updates)
                 </label>
                 <input
                   type="text"
-                  placeholder="Anonymous by default, or provide phone/email for updates"
+                  placeholder="Optional contact phone or email"
                   value={formData.reporter_contact}
                   onChange={(e) => setFormData({ ...formData, reporter_contact: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border border-[#1e293b] text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
               {/* Form Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#1e293b]">
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 shadow-md shadow-teal-500/20 disabled:opacity-60 flex items-center space-x-2 transition-all transform active:scale-95"
+                  className="px-4 py-1.5 rounded-md text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 flex items-center space-x-1.5 transition-colors"
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Verifying & Dispatching...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Validating & Dispatching...</span>
                     </>
                   ) : (
-                    <span>Submit Hazard Report</span>
+                    <span>Submit Hazard to Command</span>
                   )}
                 </button>
               </div>
@@ -593,3 +749,4 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
     </div>
   );
 }
+

@@ -5,26 +5,20 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   Clock, 
-  Filter, 
   Search, 
   UserPlus, 
   ShieldAlert, 
-  ArrowRight, 
   Loader2, 
-  FileText,
-  Upload,
-  ChevronRight,
-  ChevronDown,
-  ExternalLink,
-  Flame,
-  Check,
-  MapPin,
-  Calendar,
-  Image as ImageIcon,
-  Info
+  FileText, 
+  ChevronRight, 
+  ChevronDown, 
+  Check, 
+  MapPin, 
+  Image as ImageIcon 
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { getStatusStyle, getUrgencyStyle, formatTimeAgo, getCategoryIcon } from './IncidentCard.jsx';
+import { soundFx } from '../services/soundFx.js';
 
 export default function StaffPortal({ 
   userRole, 
@@ -76,13 +70,34 @@ export default function StaffPortal({
 
   useEffect(() => {
     loadData();
+    
+    // Live background polling for new incoming hazard reports
+    const pollInterval = setInterval(async () => {
+      try {
+        const incRes = await api.getIncidents({ 
+          status: filterStatus, 
+          urgency: filterUrgency, 
+          search,
+          limit: 50 
+        });
+        if (incRes && incRes.data) {
+          setIncidents(incRes.data);
+        }
+      } catch (err) {
+        // Silently catch background poll failures
+      }
+    }, 4000);
+
+    return () => clearInterval(pollInterval);
   }, [filterStatus, filterUrgency, search, refreshTrigger, userRole]);
 
   // Handle Dispatcher: Acknowledge Incident
   const handleAcknowledge = async (incident) => {
+    soundFx.playClick();
     setActionLoading(true);
     try {
       await api.updateStatus(incident.id, 'Acknowledged', 'Incident reviewed by Dispatch triage officer.');
+      soundFx.playSuccess();
       setActionSuccess(`Incident ${incident.reference_id} marked as Acknowledged.`);
       loadData();
       if (onIncidentUpdated) onIncidentUpdated();
@@ -103,6 +118,7 @@ export default function StaffPortal({
     setActionLoading(true);
     try {
       await api.assignCrew(assignModalIncident.id, selectedCrewId);
+      soundFx.playSuccess();
       setActionSuccess(`Crew assigned to incident ${assignModalIncident.reference_id}.`);
       setAssignModalIncident(null);
       setSelectedCrewId('');
@@ -125,6 +141,7 @@ export default function StaffPortal({
     setActionLoading(true);
     try {
       await api.recordVerification(verificationModalIncident.id, verificationNotes);
+      soundFx.playSuccess();
       setActionSuccess(`On-site verification logged for ${verificationModalIncident.reference_id}.`);
       setVerificationModalIncident(null);
       setVerificationNotes('');
@@ -150,6 +167,7 @@ export default function StaffPortal({
         notes: resolutionNotes,
         photo_url: resolutionPhoto
       });
+      soundFx.playSuccess();
       setActionSuccess(`Incident ${resolutionModalIncident.reference_id} marked as Resolved.`);
       setResolutionModalIncident(null);
       setResolutionNotes('');
@@ -164,92 +182,92 @@ export default function StaffPortal({
     }
   };
 
-  // Toggle inline accordion
   const toggleExpand = (id) => {
+    soundFx.playClick();
     setExpandedIncidentId(prev => prev === id ? null : id);
   };
 
   const isFieldCrew = userRole === 'field_crew';
-
-  // For Field Crew, display all incidents but prioritize Dispatched & On-Site
   const displayedIncidents = incidents;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* Portal Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 text-white shadow-xl border border-slate-700/80">
+      {/* Portal Top Institutional Header */}
+      <div className="bg-[#111726] rounded-lg border border-[#1e293b] p-5 text-white">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                {isFieldCrew ? 'Field Response Unit' : 'Municipal Central Dispatch'}
+              <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-sky-950 text-sky-300 border border-sky-800">
+                {isFieldCrew ? 'Field Response Terminal' : 'Municipal Central Dispatch'}
               </span>
               <span className="text-xs text-slate-400 font-mono">
-                Operator: {isFieldCrew ? 'Alex Rivera (Crew #4)' : 'Officer Davis (DSP-104)'}
+                Active ID: {isFieldCrew ? 'Unit Echo-4 (Alex Rivera)' : 'Dispatcher DSP-104 (Officer Davis)'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold brand-font text-white mt-1">
-              {isFieldCrew ? 'Field Crew Operations Terminal' : 'Authorized Dispatcher Control Console'}
+            <h2 className="text-lg sm:text-xl font-bold text-white mt-1">
+              {isFieldCrew ? 'Field Crew Response Workstation' : 'Municipal Dispatch & Triage Console'}
             </h2>
-            <p className="text-xs text-slate-300 mt-1 max-w-2xl">
+            <p className="text-xs text-slate-400 mt-0.5 max-w-2xl">
               {isFieldCrew
-                ? 'Review assigned hazard incidents, inspect descriptions & photos, log on-site verification, and record completion.'
-                : 'Triage reported civic hazards, verify urgency, acknowledge dispatches, and mobilize rapid repair crews.'}
+                ? 'Review assigned hazard incidents, verify conditions on-site, cordon off danger zones, and file certified resolution evidence.'
+                : 'Prioritize incoming citizen reports, acknowledge emergency status, and dispatch certified municipal utility repair teams.'}
             </p>
           </div>
 
           {/* Toggle Role Directly inside Portal */}
-          <div className="flex items-center bg-slate-800/90 p-1.5 rounded-2xl border border-slate-700 shrink-0">
+          <div className="flex items-center bg-[#0d131f] p-1 rounded-md border border-[#1e293b] shrink-0">
             <button
               onClick={() => {
+                soundFx.playClick();
                 setUserRole('dispatcher');
                 localStorage.setItem('civicshield_staff_role', 'dispatcher');
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all ${
+              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition-colors ${
                 userRole === 'dispatcher'
-                  ? 'bg-teal-600 text-white shadow-md'
+                  ? 'bg-sky-600 text-white font-semibold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              <span>Dispatcher (Admin)</span>
+              <span>Dispatcher Console</span>
             </button>
             <button
               onClick={() => {
+                soundFx.playClick();
                 setUserRole('field_crew');
                 localStorage.setItem('civicshield_staff_role', 'field_crew');
               }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 transition-all ${
+              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition-colors ${
                 userRole === 'field_crew'
-                  ? 'bg-teal-600 text-white shadow-md'
+                  ? 'bg-sky-600 text-white font-semibold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <UserCheck className="w-3.5 h-3.5" />
-              <span>Field Crew (Worker)</span>
+              <span>Field Crew Mobile</span>
             </button>
           </div>
         </div>
 
         {actionSuccess && (
-          <div className="mt-4 p-3 bg-teal-900/60 border border-teal-500/50 rounded-xl text-xs text-teal-200 flex items-center space-x-2 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+          <div className="mt-3 p-2.5 bg-emerald-950/80 border border-emerald-800 rounded-md text-xs text-emerald-200 flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{actionSuccess}</span>
           </div>
         )}
       </div>
 
       {/* Filter and Search Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-[#111726] p-3 rounded-lg border border-[#1e293b] flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="flex-1 w-full relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Search by ID, keyword, landmark, or sector..."
+            placeholder="Search by Reference ID, title, landmark, or sector..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-sky-500"
           />
         </div>
 
@@ -257,7 +275,7 @@ export default function StaffPortal({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="px-2.5 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
           >
             <option value="">All Statuses</option>
             <option value="Submitted">Submitted (Needs Triage)</option>
@@ -270,7 +288,7 @@ export default function StaffPortal({
           <select
             value={filterUrgency}
             onChange={(e) => setFilterUrgency(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="px-2.5 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
           >
             <option value="">All Urgencies</option>
             <option value="Critical">Critical Priority</option>
@@ -280,33 +298,34 @@ export default function StaffPortal({
         </div>
       </div>
 
-      {/* Incident Dispatch Queue Cards */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      {/* Incident Dispatch Queue Container */}
+      <div className="bg-[#111726] rounded-lg border border-[#1e293b] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[#1e293b] flex items-center justify-between bg-[#0d131f]">
           <div className="flex items-center space-x-2">
-            <h3 className="font-bold text-sm text-slate-900 brand-font">
-              {isFieldCrew ? 'Field Response Incidents' : 'Hazard Dispatch Operations Queue'}
+            <h3 className="font-semibold text-xs text-slate-200 uppercase tracking-wider">
+              {isFieldCrew ? 'Field Assignment Queue' : 'Active Dispatch Triage Queue'}
             </h3>
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-              {displayedIncidents.length} active
+            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#182338] text-sky-300 border border-[#263753]">
+              {displayedIncidents.length} tickets
             </span>
           </div>
-          <span className="text-xs text-slate-400 hidden sm:inline">
-            Click any incident to expand detailed notes & photos
+          <span className="text-[11px] text-slate-400 hidden sm:flex items-center space-x-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>Real-time Sync Active</span>
           </span>
         </div>
 
         {loading ? (
           <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
             <span className="text-xs">Fetching records from Supabase...</span>
           </div>
         ) : displayedIncidents.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
-            No incidents found matching the active filter criteria.
+          <div className="p-10 text-center text-slate-500 text-xs">
+            No active incidents matching the filter criteria.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[#1e293b]">
             {displayedIncidents.map((incident) => {
               const CategoryIcon = getCategoryIcon(incident.category);
               const isExpanded = expandedIncidentId === incident.id;
@@ -314,88 +333,73 @@ export default function StaffPortal({
               return (
                 <div 
                   key={incident.id}
-                  className="p-5 hover:bg-slate-50/50 transition-colors"
+                  className="p-4 hover:bg-[#141b29] transition-colors"
                 >
                   {/* Top Bar of the Item */}
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
                     
                     {/* Left: Metadata & Header */}
-                    <div className="space-y-1.5 flex-1">
+                    <div className="space-y-1 flex-1">
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded">
+                        <span className="font-mono text-xs font-semibold text-slate-300 bg-[#162032] border border-[#22314a] px-2 py-0.5 rounded">
                           {incident.reference_id}
                         </span>
-                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${getStatusStyle(incident.status)}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded border ${getStatusStyle(incident.status)}`}>
                           {incident.status}
                         </span>
-                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full ${getUrgencyStyle(incident.urgency)}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded ${getUrgencyStyle(incident.urgency)}`}>
                           {incident.urgency}
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-500">
                           • {formatTimeAgo(incident.created_at)}
                         </span>
-                        {incident.is_demo && (
-                          <span className="text-[10px] uppercase font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                            Demo
-                          </span>
-                        )}
                       </div>
 
-                      {/* Title */}
-                      <h4 
-                        onClick={() => toggleExpand(incident.id)}
-                        className="font-bold text-base text-slate-900 hover:text-teal-700 cursor-pointer transition-colors flex items-center space-x-2"
-                      >
-                        <span>{incident.title}</span>
-                        {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-teal-600 shrink-0" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                        )}
+                      <h4 className="font-semibold text-sm text-slate-100">
+                        {incident.title}
                       </h4>
 
-                      {/* Location & Crew snippet */}
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <div className="flex items-center space-x-1 font-medium text-slate-700">
-                          <CategoryIcon className="w-3.5 h-3.5 text-teal-600" />
+                      <div className="flex items-center space-x-3 text-xs text-slate-400">
+                        <div className="flex items-center space-x-1">
+                          <CategoryIcon className="w-3.5 h-3.5 text-slate-400" />
                           <span>{incident.category}</span>
                         </div>
-                        <span>•</span>
                         <div className="flex items-center space-x-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{incident.landmark}, {incident.area}</span>
+                          <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{incident.landmark} ({incident.area})</span>
                         </div>
                         {incident.assigned_crew_name && (
-                          <>
-                            <span>•</span>
-                            <span className="font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                              Crew: {incident.assigned_crew_name}
-                            </span>
-                          </>
+                          <div className="flex items-center space-x-1 text-sky-400">
+                            <UserCheck className="w-3.5 h-3.5" />
+                            <span>Assigned: {incident.assigned_crew_name}</span>
+                          </div>
                         )}
                       </div>
                     </div>
 
                     {/* Right: Operational Action Buttons */}
-                    <div className="flex items-center flex-wrap gap-2">
+                    <div className="flex items-center flex-wrap gap-1.5">
                       
-                      {/* Toggle Details button */}
+                      {/* Toggle Details */}
                       <button
                         onClick={() => toggleExpand(incident.id)}
-                        className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center space-x-1"
+                        className="px-2.5 py-1 text-xs font-medium text-slate-300 bg-[#162032] hover:bg-[#1d2b42] border border-[#22314a] rounded-md transition-colors flex items-center space-x-1"
                       >
-                        <span>{isExpanded ? 'Hide Details' : 'View Details'}</span>
-                        {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        <span>{isExpanded ? 'Hide' : 'Inspect'}</span>
+                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                       </button>
 
-                      {/* Audit Details Modal Trigger */}
+                      {/* Modal Details Trigger */}
                       <button
-                        onClick={() => onSelectIncident(incident)}
-                        className="px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl transition-colors flex items-center space-x-1"
-                        title="Open full progress timeline modal"
+                        onClick={() => {
+                          soundFx.playClick();
+                          onSelectIncident(incident);
+                        }}
+                        className="px-2.5 py-1 text-xs font-medium text-slate-300 bg-[#162032] hover:bg-[#1d2b42] border border-[#22314a] rounded-md transition-colors flex items-center space-x-1"
+                        title="Open full audit modal"
                       >
-                        <FileText className="w-3.5 h-3.5 text-teal-600" />
-                        <span>Audit Modal</span>
+                        <FileText className="w-3 h-3 text-slate-400" />
+                        <span>Timeline</span>
                       </button>
 
                       {/* DISPATCHER ACTIONS */}
@@ -405,20 +409,23 @@ export default function StaffPortal({
                             <button
                               disabled={actionLoading}
                               onClick={() => handleAcknowledge(incident)}
-                              className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors flex items-center space-x-1"
+                              className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md transition-colors flex items-center space-x-1"
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-3 h-3" />
                               <span>Acknowledge</span>
                             </button>
                           )}
 
                           {incident.status !== 'Resolved' && incident.status !== 'Rejected' && (
                             <button
-                              onClick={() => setAssignModalIncident(incident)}
-                              className="px-3 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-colors flex items-center space-x-1"
+                              onClick={() => {
+                                soundFx.playClick();
+                                setAssignModalIncident(incident);
+                              }}
+                              className="px-2.5 py-1 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-md transition-colors flex items-center space-x-1"
                             >
-                              <UserPlus className="w-3.5 h-3.5" />
-                              <span>{incident.assigned_crew_id ? 'Reassign Crew' : 'Dispatch Crew'}</span>
+                              <UserPlus className="w-3 h-3" />
+                              <span>{incident.assigned_crew_id ? 'Reassign' : 'Dispatch'}</span>
                             </button>
                           )}
                         </>
@@ -429,20 +436,26 @@ export default function StaffPortal({
                         <>
                           {incident.status === 'Dispatched' && (
                             <button
-                              onClick={() => setVerificationModalIncident(incident)}
-                              className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-xs transition-colors flex items-center space-x-1"
+                              onClick={() => {
+                                soundFx.playClick();
+                                setVerificationModalIncident(incident);
+                              }}
+                              className="px-2.5 py-1 text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-md transition-colors flex items-center space-x-1"
                             >
-                              <UserCheck className="w-3.5 h-3.5" />
+                              <UserCheck className="w-3 h-3" />
                               <span>Mark On-Site</span>
                             </button>
                           )}
 
                           {(incident.status === 'Dispatched' || incident.status === 'On Site') && (
                             <button
-                              onClick={() => setResolutionModalIncident(incident)}
-                              className="px-3 py-1.5 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-colors flex items-center space-x-1"
+                              onClick={() => {
+                                soundFx.playClick();
+                                setResolutionModalIncident(incident);
+                              }}
+                              className="px-2.5 py-1 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-md transition-colors flex items-center space-x-1"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <CheckCircle2 className="w-3 h-3" />
                               <span>Mark Resolved</span>
                             </button>
                           )}
@@ -452,85 +465,60 @@ export default function StaffPortal({
                     </div>
                   </div>
 
-                  {/* ============================================================== */}
-                  {/* EXPANDABLE INLINE DETAILS DRAWER (Always available on click!) */}
-                  {/* ============================================================== */}
+                  {/* Expandable Details Drawer */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 bg-slate-50/70 p-4 rounded-2xl space-y-4 animate-fade-in text-xs">
+                    <div className="mt-3 pt-3 border-t border-[#1e293b] bg-[#0d131f] p-3.5 rounded-md space-y-3 text-xs">
                       
-                      {/* Description Block */}
                       <div>
-                        <span className="font-semibold text-slate-500 uppercase tracking-wider text-[11px] block mb-1">
-                          Hazard Description & Field Context:
+                        <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider block mb-1">
+                          Full Hazard Description:
                         </span>
-                        <p className="text-slate-800 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed">
+                        <p className="text-slate-300 bg-[#111726] p-2.5 rounded border border-[#1e293b] leading-relaxed">
                           {incident.description}
                         </p>
                       </div>
 
-                      {/* On-Site Verification Findings */}
                       {incident.verification_notes && (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 space-y-1">
-                          <span className="font-bold flex items-center space-x-1.5 text-amber-800">
-                            <UserCheck className="w-4 h-4 text-amber-600" />
-                            <span>On-Site Arrival & Verification Notes:</span>
+                        <div className="p-2.5 bg-amber-950/40 border border-amber-800 rounded text-amber-200 space-y-1">
+                          <span className="font-semibold flex items-center space-x-1.5 text-amber-300">
+                            <UserCheck className="w-3.5 h-3.5" />
+                            <span>On-Site Verification Findings:</span>
                           </span>
                           <p>{incident.verification_notes}</p>
                         </div>
                       )}
 
-                      {/* Resolution Findings */}
                       {incident.resolution_notes && (
-                        <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-teal-900 space-y-1">
-                          <span className="font-bold flex items-center space-x-1.5 text-teal-800">
-                            <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                        <div className="p-2.5 bg-emerald-950/40 border border-emerald-800 rounded text-emerald-200 space-y-1">
+                          <span className="font-semibold flex items-center space-x-1.5 text-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Resolution & Completed Repairs:</span>
                           </span>
                           <p>{incident.resolution_notes}</p>
                           {incident.resolved_at && (
-                            <p className="text-[11px] text-teal-700">Resolved at: {new Date(incident.resolved_at).toLocaleString()}</p>
+                            <p className="text-[10px] text-emerald-400 mt-1">Resolved at: {new Date(incident.resolved_at).toLocaleString()}</p>
                           )}
                         </div>
                       )}
 
-                      {/* Photos & Coordinates Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                        
-                        {/* Evidence Photo */}
-                        <div>
-                          <span className="font-semibold text-slate-500 block mb-1">Photo Evidence:</span>
-                          {incident.photo_url || incident.resolution_photo_url ? (
-                            <div className="flex gap-2">
-                              {incident.photo_url && (
-                                <div className="h-28 w-28 rounded-xl overflow-hidden border border-slate-200">
-                                  <img src={incident.photo_url} alt="Report Photo" className="w-full h-full object-cover" />
-                                </div>
-                              )}
-                              {incident.resolution_photo_url && (
-                                <div className="h-28 w-28 rounded-xl overflow-hidden border border-teal-200">
-                                  <img src={incident.resolution_photo_url} alt="Resolution Photo" className="w-full h-full object-cover" />
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 italic">No photo attached by reporter.</span>
-                          )}
+                      {/* Photo preview */}
+                      {(incident.photo_url || incident.resolution_photo_url) && (
+                        <div className="pt-1">
+                          <span className="font-semibold text-slate-400 block mb-1">Evidence Records:</span>
+                          <div className="flex gap-2">
+                            {incident.photo_url && (
+                              <div className="h-24 w-24 rounded overflow-hidden border border-[#1e293b]">
+                                <img src={incident.photo_url} alt="Report Photo" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            {incident.resolution_photo_url && (
+                              <div className="h-24 w-24 rounded overflow-hidden border border-emerald-800">
+                                <img src={incident.resolution_photo_url} alt="Resolution Photo" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
                         </div>
-
-                        {/* Location Details & Coordinates */}
-                        <div className="space-y-1">
-                          <span className="font-semibold text-slate-500 block mb-1">Geographic Details:</span>
-                          <p className="text-slate-700"><strong>Landmark:</strong> {incident.landmark}</p>
-                          <p className="text-slate-700"><strong>Sector / Ward:</strong> {incident.area}</p>
-                          {incident.latitude != null && incident.longitude != null && !isNaN(Number(incident.latitude)) && (
-                            <p className="font-mono text-slate-600">
-                              <strong>Coordinates:</strong> {Number(incident.latitude).toFixed(5)}, {Number(incident.longitude).toFixed(5)}
-                            </p>
-                          )}
-                          <p className="text-slate-500"><strong>Logged:</strong> {new Date(incident.created_at).toLocaleString()}</p>
-                        </div>
-
-                      </div>
+                      )}
 
                     </div>
                   )}
@@ -542,27 +530,25 @@ export default function StaffPortal({
         )}
       </div>
 
-      {/* ============================================================== */}
       {/* MODAL 1: ASSIGN FIELD CREW (DISPATCHER) */}
-      {/* ============================================================== */}
       {assignModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="font-bold text-base text-slate-900 brand-font">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
+            <h3 className="font-semibold text-sm text-white">
               Dispatch Field Crew Unit
             </h3>
-            <p className="text-xs text-slate-600">
-              Assign a certified repair crew to incident <span className="font-mono font-bold">{assignModalIncident.reference_id}</span> ({assignModalIncident.category}).
+            <p className="text-xs text-slate-400">
+              Assign a certified repair team to incident <strong className="font-mono text-slate-200">{assignModalIncident.reference_id}</strong> ({assignModalIncident.category}).
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Select Available Field Team
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Select Qualified Response Team
               </label>
               <select
                 value={selectedCrewId}
                 onChange={(e) => setSelectedCrewId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 bg-white"
+                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
               >
                 <option value="">-- Choose Field Crew --</option>
                 {staffList.filter(s => s.role === 'field_crew').map(crew => (
@@ -573,11 +559,11 @@ export default function StaffPortal({
               </select>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2">
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
               <button
                 type="button"
                 onClick={() => setAssignModalIncident(null)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
               >
                 Cancel
               </button>
@@ -585,47 +571,45 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading || !selectedCrewId}
                 onClick={handleConfirmAssignment}
-                className="px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-md disabled:opacity-50"
               >
-                {actionLoading ? 'Dispatching...' : 'Deploy Crew Unit'}
+                {actionLoading ? 'Dispatching...' : 'Deploy Unit'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================== */}
       {/* MODAL 2: ON-SITE VERIFICATION (FIELD CREW) */}
-      {/* ============================================================== */}
       {verificationModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="font-bold text-base text-slate-900 brand-font flex items-center space-x-2">
-              <UserCheck className="w-5 h-5 text-amber-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
+            <h3 className="font-semibold text-sm text-white flex items-center space-x-2">
+              <UserCheck className="w-4 h-4 text-amber-400" />
               <span>Record On-Site Arrival & Verification</span>
             </h3>
-            <p className="text-xs text-slate-600">
-              Confirm arrival at <span className="font-semibold">{verificationModalIncident.landmark}</span> and log technical field assessment.
+            <p className="text-xs text-slate-400">
+              Confirm arrival at <strong className="text-slate-200">{verificationModalIncident.landmark}</strong> and log perimeter assessment.
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Verification & Safety Notes <span className="text-rose-500">*</span>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Field Triage Findings <span className="text-red-400">*</span>
               </label>
               <textarea
                 rows="3"
-                placeholder="e.g. Arrived on site. Perimeter cordoned off with safety cones. Voltage meter confirmed active current. Isolating feeder breaker."
+                placeholder="e.g. Arrived on site. Cordoned perimeter with safety cones. Feeder breaker isolated. Beginning repairs."
                 value={verificationNotes}
                 onChange={(e) => setVerificationNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-amber-500"
               />
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2">
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
               <button
                 type="button"
                 onClick={() => setVerificationModalIncident(null)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
               >
                 Cancel
               </button>
@@ -633,44 +617,42 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading}
                 onClick={handleConfirmVerification}
-                className="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-xs"
+                className="px-4 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-md"
               >
-                {actionLoading ? 'Logging Arrival...' : 'Mark On-Site'}
+                {actionLoading ? 'Logging...' : 'Confirm Arrival'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ============================================================== */}
       {/* MODAL 3: RESOLUTION & COMPLETION (FIELD CREW) */}
-      {/* ============================================================== */}
       {resolutionModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
-            <h3 className="font-bold text-base text-slate-900 brand-font flex items-center space-x-2">
-              <CheckCircle2 className="w-5 h-5 text-teal-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
+            <h3 className="font-semibold text-sm text-white flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>Record Incident Resolution</span>
             </h3>
-            <p className="text-xs text-slate-600">
-              Document completed repairs and restore public utility status for incident <span className="font-mono font-bold">{resolutionModalIncident.reference_id}</span>.
+            <p className="text-xs text-slate-400">
+              Document completed repairs and restore public utility status for incident <strong className="font-mono text-slate-200">{resolutionModalIncident.reference_id}</strong>.
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Resolution & Restoration Notes <span className="text-rose-500">*</span>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Resolution Notes <span className="text-red-400">*</span>
               </label>
               <textarea
                 rows="3"
-                placeholder="e.g. Spliced 440V overhead cable, reattached insulator bracket, and verified phase voltage. Roadway cleared and safe for public access."
+                placeholder="e.g. Spliced 440V overhead cable, reattached insulator bracket, and tested phase voltage. Roadway cleared and safe for public access."
                 value={resolutionNotes}
                 onChange={(e) => setResolutionNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-300 mb-1">
                 Completion Photo URL (Optional)
               </label>
               <input
@@ -678,15 +660,15 @@ export default function StaffPortal({
                 placeholder="https://... (or demo image link)"
                 value={resolutionPhoto}
                 onChange={(e) => setResolutionPhoto(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
               />
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2">
+            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
               <button
                 type="button"
                 onClick={() => setResolutionModalIncident(null)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
               >
                 Cancel
               </button>
@@ -694,9 +676,9 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading}
                 onClick={handleConfirmResolution}
-                className="px-5 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs"
+                className="px-4 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-md"
               >
-                {actionLoading ? 'Saving...' : 'Mark Incident Resolved'}
+                {actionLoading ? 'Saving...' : 'Mark Resolved'}
               </button>
             </div>
           </div>

@@ -192,8 +192,12 @@ export const incidentService = {
 
     // 2. Build new incident record
     const reference_id = generateReferenceId();
-    const newIncident = {
-      id: `inc-${Date.now()}`,
+    const now = new Date().toISOString();
+
+    // Fields that are safe for Supabase insert (matches the DB schema exactly)
+    // NOTE: Do NOT include `id` — let Supabase auto-generate the UUID.
+    // NOTE: Do NOT include `logs` — that's a virtual join, not a real column.
+    const supabaseRecord = {
       reference_id,
       title: reportData.title.trim(),
       description: reportData.description.trim(),
@@ -205,34 +209,27 @@ export const incidentService = {
       longitude: reportData.longitude ? Number(reportData.longitude) : null,
       photo_url: reportData.photo_url || null,
       status: 'Submitted',
-      reporter_id: reportData.reporter_id || null,
       reporter_contact: reportData.reporter_contact || null,
-      assigned_crew_id: null,
-      assigned_crew_name: null,
-      verification_notes: null,
-      resolution_notes: null,
-      resolution_photo_url: null,
       is_demo: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      resolved_at: null,
-      logs: [
-        {
-          id: `log-${Date.now()}`,
-          actor_name: 'Citizen Reporter',
-          previous_status: null,
-          new_status: 'Submitted',
-          notes: 'Citizen submitted report via CivicShield portal.',
-          created_at: new Date().toISOString()
-        }
-      ]
+      created_at: now,
+      updated_at: now,
+      resolved_at: null
     };
 
     if (isConnected && supabase) {
       try {
-        const { data, error } = await supabase.from('incidents').insert([newIncident]).select().single();
+        const { data, error } = await supabase
+          .from('incidents')
+          .insert([supabaseRecord])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('[CivicShield] Supabase INSERT error:', error.message, error.details, error.hint);
+        }
+
         if (!error && data) {
-          // Log initial submission
+          // Log initial submission in the audit trail table
           await supabase.from('incident_logs').insert([{
             incident_id: data.id,
             actor_name: 'Citizen Reporter',
@@ -240,15 +237,36 @@ export const incidentService = {
             new_status: 'Submitted',
             notes: 'Citizen submitted report via CivicShield portal.'
           }]);
+          console.log('[CivicShield] ✅ Incident saved to Supabase:', data.reference_id, data.id);
           return { isDuplicate: false, incident: data };
         }
       } catch (err) {
-        console.warn('[CivicShield] Supabase insert failed, storing in memory:', err.message);
+        console.error('[CivicShield] Supabase insert exception:', err.message);
       }
     }
 
-    memoryIncidents.unshift(newIncident);
-    return { isDuplicate: false, incident: newIncident };
+    // Fallback: store in memory (offline / demo mode)
+    const memoryRecord = {
+      id: `inc-${Date.now()}`,
+      ...supabaseRecord,
+      assigned_crew_id: null,
+      assigned_crew_name: null,
+      verification_notes: null,
+      resolution_notes: null,
+      resolution_photo_url: null,
+      logs: [
+        {
+          id: `log-${Date.now()}`,
+          actor_name: 'Citizen Reporter',
+          previous_status: null,
+          new_status: 'Submitted',
+          notes: 'Citizen submitted report via CivicShield portal.',
+          created_at: now
+        }
+      ]
+    };
+    memoryIncidents.unshift(memoryRecord);
+    return { isDuplicate: false, incident: memoryRecord };
   },
 
   /**
@@ -274,7 +292,6 @@ export const incidentService = {
     const resolved_at = newStatus === 'Resolved' ? now : incident.resolved_at;
 
     const logEntry = {
-      id: `log-${Date.now()}`,
       incident_id: incident.id,
       actor_name: actorName,
       previous_status: currentStatus,
@@ -299,7 +316,7 @@ export const incidentService = {
     incident.updated_at = now;
     incident.resolved_at = resolved_at;
     if (!incident.logs) incident.logs = [];
-    incident.logs.unshift(logEntry);
+    incident.logs.unshift({ id: `log-${Date.now()}`, ...logEntry });
 
     return incident;
   },
@@ -315,24 +332,39 @@ export const incidentService = {
     const crewName = staffMember ? `${staffMember.full_name} (${staffMember.badge_number || 'Crew'})` : 'Assigned Field Crew';
 
     const now = new Date().toISOString();
+    const newStatus = (incident.status === 'Submitted' || incident.status === 'Acknowledged') ? 'Dispatched' : incident.status;
+
     const logEntry = {
-      id: `log-${Date.now()}`,
       incident_id: incident.id,
       actor_name: actorName,
       previous_status: incident.status,
-      new_status: incident.status === 'Submitted' ? 'Dispatched' : incident.status,
+      new_status: newStatus,
       notes: `Assigned to field crew: ${crewName}`,
       created_at: now
     };
 
+    if (isConnected && supabase) {
+      try {
+        await supabase
+          .from('incidents')
+          .update({
+            assigned_crew_name: crewName,
+            status: newStatus,
+            updated_at: now
+          })
+          .eq('id', incident.id);
+        await supabase.from('incident_logs').insert([logEntry]);
+      } catch (err) {
+        console.warn('[CivicShield] Supabase assignCrew error:', err.message);
+      }
+    }
+
     incident.assigned_crew_id = crewId;
     incident.assigned_crew_name = crewName;
-    if (incident.status === 'Submitted' || incident.status === 'Acknowledged') {
-      incident.status = 'Dispatched';
-    }
+    incident.status = newStatus;
     incident.updated_at = now;
     if (!incident.logs) incident.logs = [];
-    incident.logs.unshift(logEntry);
+    incident.logs.unshift({ id: `log-${Date.now()}`, ...logEntry });
 
     return incident;
   },
@@ -345,23 +377,38 @@ export const incidentService = {
     if (!incident) throw new Error('Incident not found');
 
     const now = new Date().toISOString();
-    incident.verification_notes = notes;
-    if (incident.status === 'Dispatched') {
-      incident.status = 'On Site';
-    }
-    incident.updated_at = now;
+    const newStatus = incident.status === 'Dispatched' ? 'On Site' : incident.status;
 
     const logEntry = {
-      id: `log-${Date.now()}`,
       incident_id: incident.id,
       actor_name: actorName,
-      previous_status: 'Dispatched',
-      new_status: incident.status,
+      previous_status: incident.status,
+      new_status: newStatus,
       notes: `On-Site Verification: ${notes}`,
       created_at: now
     };
+
+    if (isConnected && supabase) {
+      try {
+        await supabase
+          .from('incidents')
+          .update({
+            verification_notes: notes,
+            status: newStatus,
+            updated_at: now
+          })
+          .eq('id', incident.id);
+        await supabase.from('incident_logs').insert([logEntry]);
+      } catch (err) {
+        console.warn('[CivicShield] Supabase verification error:', err.message);
+      }
+    }
+
+    incident.verification_notes = notes;
+    incident.status = newStatus;
+    incident.updated_at = now;
     if (!incident.logs) incident.logs = [];
-    incident.logs.unshift(logEntry);
+    incident.logs.unshift({ id: `log-${Date.now()}`, ...logEntry });
 
     return incident;
   },
@@ -374,14 +421,8 @@ export const incidentService = {
     if (!incident) throw new Error('Incident not found');
 
     const now = new Date().toISOString();
-    incident.resolution_notes = notes;
-    if (photo_url) incident.resolution_photo_url = photo_url;
-    incident.status = 'Resolved';
-    incident.updated_at = now;
-    incident.resolved_at = now;
 
     const logEntry = {
-      id: `log-${Date.now()}`,
       incident_id: incident.id,
       actor_name: actorName,
       previous_status: incident.status,
@@ -389,8 +430,32 @@ export const incidentService = {
       notes: `Incident Resolved: ${notes}`,
       created_at: now
     };
+
+    if (isConnected && supabase) {
+      try {
+        await supabase
+          .from('incidents')
+          .update({
+            resolution_notes: notes,
+            resolution_photo_url: photo_url || null,
+            status: 'Resolved',
+            resolved_at: now,
+            updated_at: now
+          })
+          .eq('id', incident.id);
+        await supabase.from('incident_logs').insert([logEntry]);
+      } catch (err) {
+        console.warn('[CivicShield] Supabase resolution error:', err.message);
+      }
+    }
+
+    incident.resolution_notes = notes;
+    if (photo_url) incident.resolution_photo_url = photo_url;
+    incident.status = 'Resolved';
+    incident.updated_at = now;
+    incident.resolved_at = now;
     if (!incident.logs) incident.logs = [];
-    incident.logs.unshift(logEntry);
+    incident.logs.unshift({ id: `log-${Date.now()}`, ...logEntry });
 
     return incident;
   },

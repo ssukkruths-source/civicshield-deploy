@@ -1,128 +1,179 @@
 import React from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Shield, Activity, Flame } from 'lucide-react';
+import { Shield, AlertTriangle, Clock, CheckCircle2, ChevronRight, Layers } from 'lucide-react';
 
-export default function StatsCounter({ stats, loading, onCategorySelect, selectedCategory }) {
+export default function StatsCounter({ 
+  stats, 
+  loading, 
+  onCategorySelect, 
+  selectedCategory,
+  onStatusFilter,
+  selectedStatus,
+  onUrgencyFilter,
+  selectedUrgency
+}) {
   const cards = [
     {
-      title: 'Total Hazards Logged',
+      id: 'total',
+      title: 'Total Logged Cases',
       value: stats?.total ?? 0,
       icon: Shield,
-      color: 'blue',
-      borderColor: 'border-blue-500/20',
-      bgColor: 'bg-blue-50/60',
-      iconBg: 'bg-blue-600',
-      textColor: 'text-blue-900',
-      subtext: 'Public & municipal registry'
+      accentBorder: 'hover:border-slate-500',
+      activeBorder: 'border-l-4 border-l-sky-500 border-sky-500/50 bg-[#162032]',
+      textColor: 'text-white',
+      badgeText: 'All Reports',
+      subtext: 'Public & municipal registry',
+      onClick: () => {
+        if (onStatusFilter) onStatusFilter('');
+        if (onUrgencyFilter) onUrgencyFilter('');
+      },
+      isActive: !selectedStatus && !selectedUrgency
     },
     {
-      title: 'Critical Emergency',
+      id: 'critical',
+      title: 'Priority 1 Critical',
       value: stats?.critical ?? 0,
-      icon: Flame,
-      color: 'rose',
-      borderColor: 'border-rose-500/20',
-      bgColor: 'bg-rose-50/60',
-      iconBg: 'bg-rose-600',
-      textColor: 'text-rose-900',
-      subtext: 'High hazard risk / Priority 1'
+      icon: AlertTriangle,
+      accentBorder: 'hover:border-red-500/50',
+      activeBorder: 'border-l-4 border-l-red-500 border-red-500/50 bg-[#24141a]',
+      textColor: 'text-red-400',
+      badgeText: 'Immediate Danger',
+      subtext: 'Life & property hazard',
+      onClick: () => {
+        if (onUrgencyFilter) onUrgencyFilter(selectedUrgency === 'Critical' ? '' : 'Critical');
+      },
+      isActive: selectedUrgency === 'Critical'
     },
     {
-      title: 'In Dispatch / On-Site',
+      id: 'dispatch',
+      title: 'Crews Mobilized',
       value: stats?.inProgress ?? 0,
       icon: Clock,
-      color: 'amber',
-      borderColor: 'border-amber-500/20',
-      bgColor: 'bg-amber-50/60',
-      iconBg: 'bg-amber-600',
-      textColor: 'text-amber-900',
-      subtext: 'Field teams responding'
+      accentBorder: 'hover:border-amber-500/50',
+      activeBorder: 'border-l-4 border-l-amber-500 border-amber-500/50 bg-[#241e14]',
+      textColor: 'text-amber-400',
+      badgeText: 'Active Triage',
+      subtext: 'En route or work on-site',
+      onClick: () => {
+        if (onStatusFilter) onStatusFilter(selectedStatus === 'Dispatched' ? '' : 'Dispatched');
+      },
+      isActive: selectedStatus === 'Dispatched' || selectedStatus === 'On Site'
     },
     {
-      title: 'Resolved & Restored',
+      id: 'resolved',
+      title: 'Repaired & Verified',
       value: stats?.resolved ?? 0,
       icon: CheckCircle2,
-      color: 'teal',
-      borderColor: 'border-teal-500/20',
-      bgColor: 'bg-teal-50/60',
-      iconBg: 'bg-teal-600',
-      textColor: 'text-teal-900',
-      subtext: 'Work completed & verified'
+      accentBorder: 'hover:border-emerald-500/50',
+      activeBorder: 'border-l-4 border-l-emerald-500 border-emerald-500/50 bg-[#12221b]',
+      textColor: 'text-emerald-400',
+      badgeText: 'Closed Tickets',
+      subtext: 'Public safety restored',
+      onClick: () => {
+        if (onStatusFilter) onStatusFilter(selectedStatus === 'Resolved' ? '' : 'Resolved');
+      },
+      isActive: selectedStatus === 'Resolved'
     }
   ];
 
   return (
-    <div className="space-y-4">
-      {/* 4 Primary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((card, idx) => {
+    <div className="space-y-3">
+      {/* 4 Clean Institutional KPI Telemetry Panels */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {cards.map((card) => {
           const Icon = card.icon;
           return (
             <div
-              key={idx}
-              className={`p-4 sm:p-5 rounded-2xl bg-white border ${card.borderColor} shadow-sm hover:shadow-md transition-shadow relative overflow-hidden`}
+              key={card.id}
+              onClick={card.onClick}
+              className={`p-4 rounded-lg border transition-all cursor-pointer select-none ${
+                card.isActive
+                  ? `${card.activeBorder} shadow-sm`
+                  : `bg-[#111726] border-[#1e293b] ${card.accentBorder} hover:bg-[#151e31]`
+              }`}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="text-[11px] font-medium tracking-wide uppercase text-slate-400">
                     {card.title}
-                  </p>
-                  <div className="mt-2 flex items-baseline space-x-2">
-                    <span className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${card.textColor} brand-font`}>
+                  </span>
+
+                  <div className="mt-1.5 flex items-baseline space-x-1.5">
+                    <span className={`text-2xl sm:text-3xl font-bold tracking-tight ${card.textColor} tabular-nums`}>
                       {loading ? (
-                        <span className="inline-block w-8 h-8 bg-slate-200 animate-pulse rounded"></span>
+                        <span className="inline-block w-8 h-6 bg-slate-800 animate-pulse rounded"></span>
                       ) : (
                         card.value
                       )}
                     </span>
-                    <span className="text-xs font-medium text-slate-400">cases</span>
+                    <span className="text-xs text-slate-500 font-normal">cases</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500 font-medium">
+
+                  <p className="mt-1 text-xs text-slate-400">
                     {card.subtext}
                   </p>
                 </div>
-                <div className={`p-2.5 rounded-xl ${card.iconBg} text-white shadow-sm`}>
-                  <Icon className="w-5 h-5" />
+
+                <div className="p-2 rounded-md bg-[#182235] border border-[#26354d] text-slate-300">
+                  <Icon className="w-4 h-4" />
                 </div>
+              </div>
+
+              {/* Status Pill & Filter Affordance */}
+              <div className="mt-3 pt-2.5 border-t border-[#1e293b] flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">
+                  {card.badgeText}
+                </span>
+                <span className="text-slate-400 group-hover:text-slate-200 font-medium flex items-center space-x-0.5">
+                  <span>{card.isActive ? 'Active Filter' : 'Filter by'}</span>
+                  <ChevronRight className="w-3 h-3 text-slate-500" />
+                </span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Category Pills Quick Filter */}
+      {/* Category Pills Quick Filter Bar */}
       {stats?.categoryCounts && (
-        <div className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-xs">
-          <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
-            <span className="text-slate-500 font-medium whitespace-nowrap pl-1">
-              Filter Category:
+        <div className="bg-[#111726] border border-[#1e293b] rounded-lg p-2.5">
+          <div className="flex items-center space-x-2 overflow-x-auto text-xs pb-0.5">
+            <span className="text-slate-400 font-medium whitespace-nowrap pl-1 text-[11px] uppercase tracking-wider flex items-center space-x-1">
+              <Layers className="w-3 h-3 text-slate-400" />
+              <span>Category:</span>
             </span>
+
             <button
               onClick={() => onCategorySelect('')}
-              className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
                 !selectedCategory
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-sky-600 text-white font-semibold'
+                  : 'bg-[#182235] text-slate-300 hover:bg-[#202d44]'
               }`}
             >
               All Categories
             </button>
-            {Object.entries(stats.categoryCounts).map(([cat, count]) => (
-              <button
-                key={cat}
-                onClick={() => onCategorySelect(selectedCategory === cat ? '' : cat)}
-                className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap flex items-center space-x-1.5 transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-teal-700 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <span>{cat}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  selectedCategory === cat ? 'bg-teal-900 text-teal-100' : 'bg-slate-200 text-slate-600'
-                }`}>
-                  {count}
-                </span>
-              </button>
-            ))}
+
+            {Object.entries(stats.categoryCounts).map(([cat, count]) => {
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => onCategorySelect(isSelected ? '' : cat)}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap flex items-center space-x-1.5 transition-colors ${
+                    isSelected
+                      ? 'bg-sky-600 text-white font-semibold'
+                      : 'bg-[#182235] text-slate-300 hover:bg-[#202d44]'
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold tabular-nums ${
+                    isSelected ? 'bg-sky-800 text-white' : 'bg-[#26354d] text-slate-300'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

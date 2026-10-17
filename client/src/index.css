@@ -3,18 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --civic-navy: #0a192f;
-  --civic-teal: #0d9488;
+  --color-bg-base: #0b0f17;
+  --color-surface-panel: #111726;
+  --color-surface-header: #172033;
+  --color-border-subtle: #1e293b;
+  --color-border-bold: #334155;
+  --color-brand: #0ea5e9;
+  --color-brand-hover: #38bdf8;
+  --color-critical: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-bg-base);
+  color: #f8fafc;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, .brand-font {
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 /* Custom Leaflet Map styling */
@@ -23,33 +35,90 @@ h1, h2, h3, h4, .brand-font {
   height: 100%;
   border-radius: 0.75rem;
   z-index: 10;
+  background: #0b0f17 !important;
 }
 
-/* Custom scrollbars */
+/* Clean Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #0b0f17;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: #253347;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #38bdf8;
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+/* Crisp Institutional Panels */
+.civic-card {
+  background: #111726;
+  border: 1px solid #1e293b;
+  border-radius: 0.875rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.glass-nav {
-  background: rgba(10, 25, 47, 0.94);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(30, 58, 95, 0.5);
+.civic-card:hover {
+  border-color: #334155;
+}
+
+.civic-header {
+  background: #0d131f;
+  border-bottom: 1px solid #1e293b;
+}
+
+/* Subtle, purposeful radar pulse for active emergency coordinates */
+@keyframes subtlePulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.pulse-ring-critical {
+  animation: subtlePulse 2s cubic-bezier(0.2, 0, 0.4, 1) infinite;
+}
+
+.pulse-ring-active {
+  animation: subtlePulse 2.5s cubic-bezier(0.2, 0, 0.4, 1) infinite;
+}
+
+/* Custom Leaflet Dark Popup */
+.leaflet-popup-content-wrapper {
+  background: #111726 !important;
+  color: #f8fafc !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: #111726 !important;
+  border: 1px solid #334155 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #94a3b8 !important;
+  top: 6px !important;
+  right: 6px !important;
+  font-size: 14px !important;
+  padding: 2px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #ffffff !important;
 }
