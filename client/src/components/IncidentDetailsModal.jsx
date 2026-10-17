@@ -252,11 +252,11 @@ export default function IncidentDetailsModal({ incident, onClose, onRefresh }) {
                   </div>
                 </div>
 
-                {incident.latitude && incident.longitude && (
+                {incident.latitude != null && incident.longitude != null && !isNaN(Number(incident.latitude)) && (
                   <div>
                     <span className="text-slate-400 block text-[11px]">GPS Coordinates</span>
                     <p className="font-mono text-slate-700 text-[11px] mt-0.5">
-                      {incident.latitude.toFixed(5)}, {incident.longitude.toFixed(5)}
+                      {Number(incident.latitude).toFixed(5)}, {Number(incident.longitude).toFixed(5)}
                     </p>
                   </div>
                 )}

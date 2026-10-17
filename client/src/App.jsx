@@ -105,6 +105,25 @@ export default function App() {
     handleRefresh();
   };
 
+  const handleSelectIncident = async (incident) => {
+    if (!incident) {
+      setSelectedIncident(null);
+      return;
+    }
+    // Set immediate data so modal opens without delay
+    setSelectedIncident(incident);
+
+    // Fetch full incident record with joined logs
+    try {
+      const res = await api.getIncidentById(incident.id || incident.reference_id);
+      if (res && res.data) {
+        setSelectedIncident(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not load fresh incident details, using cached:', err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-teal-500 selection:text-white">
       
@@ -128,7 +147,7 @@ export default function App() {
           <StaffPortal
             userRole={userRole}
             setUserRole={setUserRole}
-            onSelectIncident={(inc) => setSelectedIncident(inc)}
+            onSelectIncident={handleSelectIncident}
             refreshTrigger={refreshTrigger}
             onIncidentUpdated={handleIncidentUpdated}
           />
@@ -206,7 +225,7 @@ export default function App() {
             {activeView === 'map' && (
               <IncidentMap
                 incidents={incidents}
-                onSelectIncident={(inc) => setSelectedIncident(inc)}
+                onSelectIncident={handleSelectIncident}
               />
             )}
 
@@ -319,7 +338,7 @@ export default function App() {
                     <IncidentCard
                       key={incident.id}
                       incident={incident}
-                      onSelect={(inc) => setSelectedIncident(inc)}
+                      onSelect={handleSelectIncident}
                     />
                   ))}
                 </div>

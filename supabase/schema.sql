@@ -103,32 +103,38 @@ ALTER TABLE incident_logs ENABLE ROW LEVEL SECURITY;
 
 -- 8a. Profiles Policies
 -- Staff can view staff profiles for assignment dropdowns
+DROP POLICY IF EXISTS "Public staff directory view" ON profiles;
 CREATE POLICY "Public staff directory view" 
     ON profiles FOR SELECT 
     USING (true);
 
 -- 8b. Incidents Policies
 -- Public can read active incidents (excluding sensitive internal notes if any)
+DROP POLICY IF EXISTS "Public can view incidents" ON incidents;
 CREATE POLICY "Public can view incidents" 
     ON incidents FOR SELECT 
     USING (true);
 
 -- Anyone can submit an incident (handled safely via backend validation or direct insert)
+DROP POLICY IF EXISTS "Anyone can report an incident" ON incidents;
 CREATE POLICY "Anyone can report an incident" 
     ON incidents FOR INSERT 
     WITH CHECK (true);
 
 -- Authenticated staff can update incidents
+DROP POLICY IF EXISTS "Staff can update incidents" ON incidents;
 CREATE POLICY "Staff can update incidents" 
     ON incidents FOR UPDATE 
     TO authenticated 
     USING (true);
 
 -- 8c. Incident Logs Policies
+DROP POLICY IF EXISTS "Public can view incident history" ON incident_logs;
 CREATE POLICY "Public can view incident history" 
     ON incident_logs FOR SELECT 
     USING (true);
 
+DROP POLICY IF EXISTS "Authenticated staff can add logs" ON incident_logs;
 CREATE POLICY "Authenticated staff can add logs" 
     ON incident_logs FOR INSERT 
     TO authenticated 
