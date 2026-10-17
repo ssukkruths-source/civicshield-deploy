@@ -1,0 +1,14 @@
+{
+  "name": "civicshield-monorepo",
+  "version": "1.0.0",
+  "description": "CivicShield — Municipal Infrastructure Hazard & Utility Outage Dispatcher",
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "test:api": "cd server && node test_flows.js",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": ["civicshield", "civic-tech", "govtech", "supabase", "react", "express"],
+  "author": "CivicShield",
+  "license": "MIT"
+}
