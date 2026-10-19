@@ -24,7 +24,8 @@ import {
   Lightbulb, 
   ShieldAlert,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 import { getCategoryIcon } from './IncidentCard.jsx';
 import { api } from '../services/api.js';
@@ -39,53 +40,48 @@ L.Icon.Default.mergeOptions({
 
 // Map Tile Styles
 const TILE_LAYERS = {
-  googleHybrid: {
-    name: 'Google Satellite',
-    url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-    attribution: '&copy; Google Maps Satellite'
+  streets: {
+    name: 'Clean Positron',
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB &copy; OpenStreetMap contributors'
   },
   googleStreets: {
     name: 'Google Streets',
     url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
     attribution: '&copy; Google Maps'
   },
+  googleHybrid: {
+    name: 'Google Satellite',
+    url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    attribution: '&copy; Google Maps Satellite'
+  },
   dark: {
-    name: 'Tactical Dark Ops',
+    name: 'Dark Contrast',
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CartoDB &copy; OpenStreetMap contributors'
-  },
-  satellite: {
-    name: 'Esri Satellite',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri'
-  },
-  streets: {
-    name: 'Clean Positron',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; CartoDB'
   }
 };
 
 // Create custom clean institutional markers
 function createCustomMarkerIcon(urgency, status, isSelected = false) {
-  let mainColor = '#0ea5e9'; // Sky blue default
+  let mainColor = '#20A39E'; // Teal default
   let rippleClass = 'pulse-ring-active';
 
   if (status === 'Resolved') {
-    mainColor = '#10b981'; // Emerald
+    mainColor = '#25855A'; // Green
     rippleClass = '';
   } else if (urgency === 'Critical') {
-    mainColor = '#ef4444'; // Red
+    mainColor = '#D64545'; // Critical Red
     rippleClass = 'pulse-ring-critical';
   } else if (urgency === 'Medium') {
-    mainColor = '#f59e0b'; // Amber
+    mainColor = '#D99A26'; // Warning Amber
     rippleClass = 'pulse-ring-medium';
   }
 
-  const borderStyle = isSelected ? 'border: 3px solid #ffffff; transform: scale(1.2);' : 'border: 2px solid #ffffff;';
+  const borderStyle = isSelected ? 'border: 3px solid #ffffff; transform: scale(1.25);' : 'border: 2px solid #ffffff;';
 
   const html = `
-    <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
       ${rippleClass ? `
         <div class="${rippleClass}" style="
           position: absolute;
@@ -104,7 +100,7 @@ function createCustomMarkerIcon(urgency, status, isSelected = false) {
         background-color: ${mainColor};
         border-radius: 50%;
         ${borderStyle}
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 3px 8px rgba(24, 59, 86, 0.35);
       "></div>
     </div>
   `;
@@ -112,8 +108,8 @@ function createCustomMarkerIcon(urgency, status, isSelected = false) {
   return L.divIcon({
     html,
     className: 'custom-hazard-pin',
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
     popupAnchor: [0, -14],
   });
 }
@@ -127,39 +123,39 @@ function createUserLocationIcon() {
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: #3b82f6;
-        opacity: 0.5;
+        background: #356B8C;
+        opacity: 0.45;
         pointer-events: none;
       "></div>
       <div style="
         position: relative;
         width: 16px;
         height: 16px;
-        background-color: #2563eb;
+        background-color: #183B56;
         border: 2.5px solid #ffffff;
         border-radius: 50%;
-        box-shadow: 0 0 14px rgba(37, 99, 235, 0.8);
+        box-shadow: 0 2px 8px rgba(24, 59, 86, 0.4);
       "></div>
     </div>
   `;
 
   return L.divIcon({
     html,
-    className: 'user-location-pin',
+    className: 'custom-user-location-pin',
     iconSize: [36, 36],
     iconAnchor: [18, 18],
     popupAnchor: [0, -18],
   });
 }
 
-// Map Controller for programmatically flying or fitting bounds
+// Map Controller Component to reactively fly to coordinates
 function MapController({ targetCenter, targetZoom, fitBoundsList }) {
   const map = useMap();
 
   useEffect(() => {
-    if (targetCenter) {
+    if (targetCenter && targetCenter[0] && targetCenter[1]) {
       map.flyTo(targetCenter, targetZoom || 15, {
-        duration: 1.4,
+        duration: 1.2,
         easeLinearity: 0.25
       });
     }
@@ -167,8 +163,14 @@ function MapController({ targetCenter, targetZoom, fitBoundsList }) {
 
   useEffect(() => {
     if (fitBoundsList && fitBoundsList.length > 0) {
-      const bounds = L.latLngBounds(fitBoundsList.map(item => [item.latitude, item.longitude]));
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      try {
+        const bounds = L.latLngBounds(fitBoundsList.map(item => [item.lat, item.lng]));
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+        }
+      } catch (err) {
+        // Fallback gracefully
+      }
     }
   }, [fitBoundsList, map]);
 
@@ -176,183 +178,123 @@ function MapController({ targetCenter, targetZoom, fitBoundsList }) {
 }
 
 export default function IncidentMap({ 
-  incidents: initialIncidents = [], 
-  onSelectIncident,
-  onIncidentUpdated,
-  focusedIncident = null
+  incidents = [], 
+  onSelectIncident, 
+  onIncidentUpdated, 
+  focusedIncident 
 }) {
-  const [incidents, setIncidents] = useState(initialIncidents);
-  const [activeTileStyle, setActiveTileStyle] = useState('googleHybrid');
+  const [activeTileStyle, setActiveTileStyle] = useState('streets');
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locating, setLocating] = useState(false);
-  const [isLiveSync, setIsLiveSync] = useState(true);
-  const [lastSyncTime, setLastSyncTime] = useState(new Date());
-  const [syncCountdown, setSyncCountdown] = useState(5);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [flyTarget, setFlyTarget] = useState(null);
   const [fitRequest, setFitRequest] = useState(null);
-  const [liveBanner, setLiveBanner] = useState('');
-  const prevIncidentCountRef = useRef(initialIncidents.length);
+  const [lastSyncTime, setLastSyncTime] = useState(new Date());
+  const [syncCountdown, setSyncCountdown] = useState(15);
 
-  // Sync with initialIncidents prop
-  useEffect(() => {
-    setIncidents(initialIncidents);
-  }, [initialIncidents]);
-
-  // Handle external focusedIncident trigger from cards or dashboard
-  useEffect(() => {
-    if (focusedIncident && focusedIncident.latitude && focusedIncident.longitude) {
-      const lat = parseFloat(focusedIncident.latitude);
-      const lng = parseFloat(focusedIncident.longitude);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        setFlyTarget([lat, lng]);
-        setSelectedIncident(focusedIncident);
-      }
-    }
-  }, [focusedIncident]);
-
-  // Live Auto-Poll Timer (every 5 seconds)
-  useEffect(() => {
-    if (!isLiveSync) return;
-
-    const countdownInterval = setInterval(() => {
-      setSyncCountdown((prev) => (prev <= 1 ? 5 : prev - 1));
-    }, 1000);
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await api.getIncidents({ limit: 100 });
-        if (res && res.data) {
-          const fresh = res.data;
-          // Check if new incident appeared
-          if (fresh.length > prevIncidentCountRef.current) {
-            const newest = fresh[0];
-            setLiveBanner(`⚡ Live Alert: New hazard logged "${newest.title}" in ${newest.area}`);
-            setTimeout(() => setLiveBanner(''), 7000);
-            if (onIncidentUpdated) onIncidentUpdated();
-          }
-          prevIncidentCountRef.current = fresh.length;
-          setIncidents(fresh);
-          setLastSyncTime(new Date());
-        }
-      } catch (err) {
-        console.warn('Live map poll skipped:', err.message);
-      }
-    }, 5000);
-
-    return () => {
-      clearInterval(countdownInterval);
-      clearInterval(pollInterval);
-    };
-  }, [isLiveSync, onIncidentUpdated]);
-
-  // Filter valid incidents with GPS
+  // Filter out records without valid coordinates
   const validIncidents = incidents.filter(
-    (inc) =>
-      inc.latitude != null &&
-      inc.longitude != null &&
-      !isNaN(Number(inc.latitude)) &&
-      !isNaN(Number(inc.longitude))
+    (inc) => inc.latitude != null && inc.longitude != null && !isNaN(Number(inc.latitude)) && !isNaN(Number(inc.longitude))
   );
 
-  // Apply map-level urgency filter
+  // Filter by Urgency / Status tab
   const displayedIncidents = validIncidents.filter((inc) => {
     if (filterUrgency === 'ALL') return true;
+    if (filterUrgency === 'CRITICAL') return inc.urgency === 'Critical';
+    if (filterUrgency === 'ACTIVE') return inc.status !== 'Resolved';
     if (filterUrgency === 'RESOLVED') return inc.status === 'Resolved';
-    if (filterUrgency === 'CRITICAL') return inc.urgency === 'Critical' && inc.status !== 'Resolved';
-    if (filterUrgency === 'ACTIVE') return inc.status !== 'Resolved' && inc.status !== 'Rejected';
     return true;
   });
 
-  // Calculate Center
-  const defaultCenter = validIncidents.length > 0
-    ? [Number(validIncidents[0].latitude), Number(validIncidents[0].longitude)]
-    : [40.7128, -74.006];
+  // Calculate default center coordinate
+  const defaultCenter = [37.7749, -122.4194];
 
-  // Geolocation trigger
+  // Handle external focus request (from card "Locate on map" button)
+  useEffect(() => {
+    if (focusedIncident && focusedIncident.latitude && focusedIncident.longitude) {
+      const lat = Number(focusedIncident.latitude);
+      const lng = Number(focusedIncident.longitude);
+      setFlyTarget({ center: [lat, lng], zoom: 16 });
+      setSelectedIncident(focusedIncident);
+    }
+  }, [focusedIncident]);
+
+  // Periodic automatic sync countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSyncCountdown((prev) => {
+        if (prev <= 1) {
+          setLastSyncTime(new Date());
+          if (onIncidentUpdated) onIncidentUpdated();
+          return 15;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [onIncidentUpdated]);
+
   const handleLocateMe = () => {
-    setLocating(true);
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
-      setLocating(false);
       return;
     }
-
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords = [pos.coords.latitude, pos.coords.longitude];
-        setUserLocation(coords);
-        setFlyTarget({ center: coords, zoom: 15 });
+        const { latitude, longitude } = pos.coords;
+        setUserLocation([latitude, longitude]);
+        setFlyTarget({ center: [latitude, longitude], zoom: 15 });
         setLocating(false);
       },
       (err) => {
-        alert('Could not acquire your location. Please check browser permissions.');
+        console.warn('Geolocation error:', err.message);
         setLocating(false);
       },
-      { timeout: 8000, enableHighAccuracy: true }
+      { timeout: 8000 }
     );
   };
 
-  // Fit all markers
   const handleFitAll = () => {
-    if (displayedIncidents.length > 0) {
-      setFitRequest([...displayedIncidents]);
-    }
+    if (displayedIncidents.length === 0) return;
+    const coords = displayedIncidents.map(i => ({ lat: Number(i.latitude), lng: Number(i.longitude) }));
+    setFitRequest([...coords]);
   };
 
-  // Manual Trigger Sync
-  const handleManualSync = async () => {
-    try {
-      const res = await api.getIncidents({ limit: 100 });
-      if (res && res.data) {
-        setIncidents(res.data);
-        setLastSyncTime(new Date());
-        setSyncCountdown(5);
-      }
-    } catch (e) {
-      console.warn('Sync failed:', e.message);
-    }
+  const handleManualSync = () => {
+    setLastSyncTime(new Date());
+    setSyncCountdown(15);
+    if (onIncidentUpdated) onIncidentUpdated();
   };
 
   const criticalCount = validIncidents.filter(i => i.urgency === 'Critical' && i.status !== 'Resolved').length;
-  const activeCount = validIncidents.filter(i => i.status !== 'Resolved' && i.status !== 'Rejected').length;
+  const activeCount = validIncidents.filter(i => i.status !== 'Resolved').length;
   const resolvedCount = validIncidents.filter(i => i.status === 'Resolved').length;
 
   return (
-    <div className={`relative transition-all duration-300 ${
-      isFullscreen 
-        ? 'fixed inset-0 z-50 bg-[#0b0f17] p-4' 
-        : 'rounded-lg border border-[#1e293b] shadow-xl bg-[#111726] p-4 sm:p-5 overflow-hidden'
-    }`}>
+    <div className={`space-y-3 transition-all ${isFullscreen ? 'fixed inset-0 z-50 bg-[#F7F8FA] p-4 sm:p-6 overflow-y-auto' : ''}`}>
       
-      {/* Live Toast Notification Banner */}
-      {liveBanner && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-rose-950/95 border border-rose-800 text-rose-200 px-3.5 py-1.5 rounded-md shadow-xl flex items-center space-x-2 text-xs font-medium">
-          <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-          <span>{liveBanner}</span>
-        </div>
-      )}
-
-      {/* Header Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between pb-3.5 mb-3 border-b border-[#1e293b] gap-3">
+      {/* Top Map Action Toolbar */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-[#E4E9EF] shadow-card flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
         
-        {/* Map Header Status & Telemetry */}
+        {/* Left Indicator */}
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-[#172033] border border-[#26354d] rounded-md text-sky-400">
-            <Radio className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-lg bg-[#E6F7F6] border border-[#BCE8E6] flex items-center justify-center text-[#20A39E] shrink-0">
+            <Radio className="w-4 h-4 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="text-sm font-semibold text-white">
-                Geospatial Outage & Hazard Radar
+              <h2 className="text-sm font-bold text-[#183B56] leading-none">
+                Geospatial Incident Radar
               </h2>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-950 text-emerald-300 border border-emerald-800">
-                ACTIVE
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#F0FDF4] text-[#166534] border border-[#BCF0DA]">
+                LIVE TELEMETRY
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#697586] mt-1">
               <span>{displayedIncidents.length} geocoded incidents</span>
               <span className="mx-1.5">•</span>
               <span>Updated {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -364,43 +306,43 @@ export default function IncidentMap({
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
           
           {/* Urgency Filter Pills */}
-          <div className="flex items-center bg-[#0d131f] p-0.5 rounded-md border border-[#1e293b] text-xs">
+          <div className="flex items-center bg-[#F0F4F8] p-1 rounded-xl border border-[#E4E9EF] text-xs">
             <button
               onClick={() => setFilterUrgency('ALL')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterUrgency === 'ALL'
-                  ? 'bg-[#1e293b] text-white font-semibold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white text-[#183B56] shadow-xs'
+                  : 'text-[#697586] hover:text-[#172B3A]'
               }`}
             >
               All ({validIncidents.length})
             </button>
             <button
               onClick={() => setFilterUrgency('CRITICAL')}
-              className={`px-2 py-1 rounded text-[11px] font-medium flex items-center space-x-1 transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterUrgency === 'CRITICAL'
-                  ? 'bg-red-950 text-red-200 border border-red-800'
-                  : 'text-red-400 hover:text-red-300'
+                  ? 'bg-[#FDF2F2] text-[#D64545] border border-[#F8B4B4] shadow-xs'
+                  : 'text-[#D64545] hover:text-[#b91c1c]'
               }`}
             >
-              <span>Critical ({criticalCount})</span>
+              Critical ({criticalCount})
             </button>
             <button
               onClick={() => setFilterUrgency('ACTIVE')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterUrgency === 'ACTIVE'
-                  ? 'bg-amber-950 text-amber-200 border border-amber-800'
-                  : 'text-amber-400 hover:text-amber-300'
+                  ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E] shadow-xs'
+                  : 'text-[#D99A26] hover:text-[#b45309]'
               }`}
             >
               Active ({activeCount})
             </button>
             <button
               onClick={() => setFilterUrgency('RESOLVED')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 filterUrgency === 'RESOLVED'
-                  ? 'bg-emerald-950 text-emerald-200 border border-emerald-800'
-                  : 'text-emerald-400 hover:text-emerald-300'
+                  ? 'bg-[#F0FDF4] text-[#166534] border border-[#BCF0DA] shadow-xs'
+                  : 'text-[#25855A] hover:text-[#166534]'
               }`}
             >
               Resolved ({resolvedCount})
@@ -408,55 +350,63 @@ export default function IncidentMap({
           </div>
 
           {/* Map Layer Style Switcher */}
-          <div className="flex items-center bg-[#0d131f] p-0.5 rounded-md border border-[#1e293b] text-xs">
+          <div className="flex items-center bg-[#F0F4F8] p-1 rounded-xl border border-[#E4E9EF] text-xs">
             <button
-              onClick={() => setActiveTileStyle('googleHybrid')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                activeTileStyle === 'googleHybrid' ? 'bg-[#1e293b] text-white font-semibold' : 'text-slate-400 hover:text-white'
+              onClick={() => setActiveTileStyle('streets')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeTileStyle === 'streets' ? 'bg-white text-[#183B56] shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
               }`}
             >
-              Satellite
+              Positron
             </button>
             <button
               onClick={() => setActiveTileStyle('googleStreets')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                activeTileStyle === 'googleStreets' ? 'bg-[#1e293b] text-white font-semibold' : 'text-slate-400 hover:text-white'
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeTileStyle === 'googleStreets' ? 'bg-white text-[#183B56] shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
               }`}
             >
               Streets
             </button>
             <button
-              onClick={() => setActiveTileStyle('dark')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                activeTileStyle === 'dark' ? 'bg-[#1e293b] text-white font-semibold' : 'text-slate-400 hover:text-white'
+              onClick={() => setActiveTileStyle('googleHybrid')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeTileStyle === 'googleHybrid' ? 'bg-white text-[#183B56] shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
               }`}
             >
-              Dark Ops
+              Satellite
+            </button>
+            <button
+              onClick={() => setActiveTileStyle('dark')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeTileStyle === 'dark' ? 'bg-[#183B56] text-white shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
+              }`}
+            >
+              Dark
             </button>
           </div>
 
           {/* Action Buttons: Locate Me, Fit Bounds, Fullscreen */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1.5">
             <button
               onClick={handleLocateMe}
               disabled={locating}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 rounded-xl transition-colors shadow-xs"
-              title="Locate My Zone"
+              className="p-2 bg-white hover:bg-[#F7F8FA] text-[#20A39E] border border-[#E4E9EF] hover:border-[#CBD5E1] rounded-xl transition-all shadow-xs"
+              title="Locate My Zone (GPS)"
             >
               <Crosshair className={`w-4 h-4 ${locating ? 'animate-spin' : ''}`} />
             </button>
 
             <button
               onClick={handleFitAll}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition-colors shadow-xs"
-              title="Fit All Hazards"
+              className="p-2 bg-white hover:bg-[#F7F8FA] text-[#183B56] border border-[#E4E9EF] hover:border-[#CBD5E1] rounded-xl transition-all shadow-xs"
+              title="Fit All Hazards into View"
             >
               <Navigation className="w-4 h-4 rotate-45" />
             </button>
 
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition-colors shadow-xs"
+              className="p-2 bg-white hover:bg-[#F7F8FA] text-[#183B56] border border-[#E4E9EF] hover:border-[#CBD5E1] rounded-xl transition-all shadow-xs"
               title={isFullscreen ? 'Exit Fullscreen' : 'Expand Fullscreen'}
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -464,10 +414,10 @@ export default function IncidentMap({
 
             <button
               onClick={handleManualSync}
-              className="px-2.5 py-2 bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+              className="px-3 py-1.5 bg-[#E6F7F6] hover:bg-[#D3F2F0] text-[#156965] border border-[#BCE8E6] rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-xs"
               title="Scan now"
             >
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <RefreshCw className="w-3.5 h-3.5 text-[#20A39E]" />
               <span className="hidden sm:inline">Sync ({syncCountdown}s)</span>
             </button>
           </div>
@@ -476,40 +426,40 @@ export default function IncidentMap({
       </div>
 
       {/* Map Container Viewport */}
-      <div className={`w-full rounded-2xl overflow-hidden relative border border-slate-800 shadow-inner ${
+      <div className={`w-full rounded-2xl overflow-hidden relative border border-[#E4E9EF] shadow-panel ${
         isFullscreen ? 'h-[calc(100vh-140px)]' : 'h-[520px]'
       }`}>
         
         {/* Floating Top Radar HUD Status */}
         <div className="absolute top-3 left-3 z-30 pointer-events-none">
-          <div className="glass-panel px-3 py-1.5 rounded-xl border border-slate-700/80 text-white flex items-center space-x-2 text-[11px] font-mono shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="font-semibold text-emerald-400">DISPATCH RADAR ACTIVE</span>
-            <span className="text-slate-400">|</span>
-            <span className="text-slate-300">{displayedIncidents.length} Hazards Pinpointed</span>
+          <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#E4E9EF] text-[#183B56] flex items-center space-x-2 text-xs font-mono shadow-md">
+            <span className="w-2 h-2 rounded-full bg-[#20A39E] animate-ping"></span>
+            <span className="font-bold text-[#183B56]">RADAR LIVE</span>
+            <span className="text-[#CBD5E1]">|</span>
+            <span className="text-[#697586] font-sans font-medium">{displayedIncidents.length} Hazards Active</span>
           </div>
         </div>
 
         {/* Floating Legend Badge */}
-        <div className="absolute top-3 right-3 z-30 hidden sm:flex items-center space-x-2 glass-panel px-3 py-1.5 rounded-xl border border-slate-700/80 text-[11px] font-medium text-slate-200 shadow-xl">
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/80"></span>
-            <span>Critical</span>
+        <div className="absolute top-3 right-3 z-30 hidden sm:flex items-center space-x-2.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#E4E9EF] text-xs font-medium text-[#172B3A] shadow-md">
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D64545]"></span>
+            <span className="text-xs">Critical</span>
           </div>
-          <span>•</span>
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/80"></span>
-            <span>Medium</span>
+          <span className="text-[#CBD5E1]">•</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D99A26]"></span>
+            <span className="text-xs">Medium</span>
           </div>
-          <span>•</span>
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/80"></span>
-            <span>Low</span>
+          <span className="text-[#CBD5E1]">•</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#20A39E]"></span>
+            <span className="text-xs">Active</span>
           </div>
-          <span>•</span>
-          <div className="flex items-center space-x-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/80"></span>
-            <span>Resolved</span>
+          <span className="text-[#CBD5E1]">•</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#25855A]"></span>
+            <span className="text-xs">Resolved</span>
           </div>
         </div>
 
@@ -538,9 +488,9 @@ export default function IncidentMap({
             <>
               <Marker position={userLocation} icon={createUserLocationIcon()}>
                 <Popup>
-                  <div className="text-xs text-white p-1">
-                    <span className="font-bold text-blue-400 block mb-0.5">Your Position</span>
-                    <span className="text-slate-300">GPS verified zone</span>
+                  <div className="text-xs p-1">
+                    <span className="font-bold text-[#183B56] block mb-0.5">Your Position</span>
+                    <span className="text-[#697586]">GPS verified zone</span>
                   </div>
                 </Popup>
               </Marker>
@@ -548,9 +498,9 @@ export default function IncidentMap({
                 center={userLocation}
                 radius={250}
                 pathOptions={{
-                  color: '#3b82f6',
-                  fillColor: '#3b82f6',
-                  fillOpacity: 0.15,
+                  color: '#20A39E',
+                  fillColor: '#20A39E',
+                  fillOpacity: 0.12,
                   weight: 1.5
                 }}
               />
@@ -571,9 +521,9 @@ export default function IncidentMap({
                     center={[Number(incident.latitude), Number(incident.longitude)]}
                     radius={140}
                     pathOptions={{
-                      color: '#f43f5e',
-                      fillColor: '#f43f5e',
-                      fillOpacity: 0.18,
+                      color: '#D64545',
+                      fillColor: '#D64545',
+                      fillOpacity: 0.14,
                       weight: 1.5,
                       dashArray: '4, 4'
                     }}
@@ -590,51 +540,51 @@ export default function IncidentMap({
                   }}
                 >
                   <Popup className="civic-popup">
-                    <div className="p-1 max-w-[260px] text-white">
+                    <div className="p-1 max-w-[260px] text-[#172B3A]">
                       
                       {/* Reference ID & Urgency Pill */}
                       <div className="flex items-center justify-between text-[11px] mb-1 font-mono">
-                        <span className="text-teal-400 font-bold">{incident.reference_id}</span>
+                        <span className="text-[#183B56] font-bold">{incident.reference_id}</span>
                         <span className={`px-2 py-0.5 rounded-full font-sans text-[10px] font-bold ${
-                          incident.urgency === 'Critical' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' :
-                          incident.urgency === 'Medium' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
-                          'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                          incident.urgency === 'Critical' ? 'bg-[#FDF2F2] text-[#D64545] border border-[#F8B4B4]' :
+                          incident.urgency === 'Medium' ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E]' :
+                          'bg-[#F0F6FA] text-[#356B8C] border border-[#D0E1ED]'
                         }`}>
                           {incident.urgency}
                         </span>
                       </div>
 
                       {/* Title */}
-                      <h4 className="font-bold text-xs text-white leading-snug line-clamp-2 mt-1">
+                      <h4 className="font-bold text-xs text-[#183B56] leading-snug line-clamp-2 mt-1">
                         {incident.title}
                       </h4>
 
                       {/* Category & Landmark */}
-                      <div className="text-[11px] text-slate-300 mt-2 space-y-1">
-                        <div className="flex items-center space-x-1.5 font-medium text-slate-200">
-                          <CategoryIcon className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                      <div className="text-[11px] text-[#697586] mt-2 space-y-1">
+                        <div className="flex items-center space-x-1.5 font-medium text-[#172B3A]">
+                          <CategoryIcon className="w-3.5 h-3.5 text-[#20A39E] shrink-0" />
                           <span>{incident.category}</span>
                         </div>
-                        <div className="flex items-center space-x-1.5 text-slate-400">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <div className="flex items-center space-x-1.5 text-[#697586]">
+                          <MapPin className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
                           <span className="truncate">{incident.landmark}, {incident.area}</span>
                         </div>
                       </div>
 
                       {/* Status & CTA button */}
-                      <div className="mt-3 pt-2 border-t border-slate-700/80 flex items-center justify-between">
+                      <div className="mt-3 pt-2 border-t border-[#E4E9EF] flex items-center justify-between">
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          incident.status === 'Resolved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                          incident.status === 'Dispatched' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
-                          incident.status === 'On Site' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
-                          'bg-slate-700 text-slate-200'
+                          incident.status === 'Resolved' ? 'bg-[#F0FDF4] text-[#166534] border border-[#BCF0DA]' :
+                          incident.status === 'Dispatched' ? 'bg-[#E6F7F6] text-[#156965] border border-[#BCE8E6]' :
+                          incident.status === 'On Site' ? 'bg-[#FEF9EE] text-[#B45309] border border-[#F9DE9E]' :
+                          'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'
                         }`}>
                           {incident.status}
                         </span>
 
                         <button
                           onClick={() => onSelectIncident(incident)}
-                          className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold text-[10px] flex items-center space-x-1 transition-colors"
+                          className="px-2.5 py-1 rounded-lg bg-[#20A39E] hover:bg-[#177e7a] text-white font-semibold text-[10px] flex items-center space-x-1 transition-all shadow-xs"
                         >
                           <span>Full Audit</span>
                           <ExternalLink className="w-3 h-3" />
@@ -649,57 +599,57 @@ export default function IncidentMap({
           })}
         </MapContainer>
 
-        {/* Floating Bottom Active Selection HUD Card */}
+        {/* Floating Bottom Active Selection Card */}
         {selectedIncident && (
-          <div className="absolute bottom-3 left-3 right-3 sm:left-auto sm:right-3 sm:max-w-md z-30">
-            <div className="bg-[#111726] p-3.5 rounded-lg border border-[#26354d] text-white shadow-xl space-y-2">
+          <div className="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-md z-30 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="bg-white p-4 rounded-xl border border-[#E4E9EF] text-[#172B3A] shadow-elevated space-y-2.5">
               
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-mono text-xs font-semibold text-slate-300 bg-[#162032] px-2 py-0.5 rounded border border-[#22314a]">
+                    <span className="font-mono text-xs font-semibold text-[#183B56] bg-[#F0F4F8] px-2 py-0.5 rounded-md border border-[#E4E9EF]">
                       {selectedIncident.reference_id}
                     </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded ${
-                      selectedIncident.urgency === 'Critical' ? 'bg-red-950 text-red-300 border border-red-800' :
-                      selectedIncident.urgency === 'Medium' ? 'bg-amber-950 text-amber-300 border border-amber-800' :
-                      'bg-slate-800 text-slate-300'
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                      selectedIncident.urgency === 'Critical' ? 'bg-[#FDF2F2] text-[#D64545] border border-[#F8B4B4]' :
+                      selectedIncident.urgency === 'Medium' ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E]' :
+                      'bg-[#F0F6FA] text-[#356B8C] border border-[#D0E1ED]'
                     }`}>
                       {selectedIncident.urgency}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#697586] font-medium">
                       {selectedIncident.status}
                     </span>
                   </div>
-                  <h4 className="font-semibold text-xs text-white mt-1 line-clamp-1">
+                  <h4 className="font-bold text-sm text-[#183B56] mt-1.5 line-clamp-1">
                     {selectedIncident.title}
                   </h4>
                 </div>
 
                 <button
                   onClick={() => setSelectedIncident(null)}
-                  className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+                  className="p-1 text-[#94A3B8] hover:text-[#172B3A] rounded-lg hover:bg-[#F0F4F8] transition-colors"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[#697586] line-clamp-2 leading-relaxed">
                 {selectedIncident.description}
               </p>
 
               <div className="flex items-center justify-between pt-1">
-                <div className="text-xs text-slate-400 flex items-center space-x-1 truncate max-w-[200px]">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <div className="text-xs text-[#697586] flex items-center space-x-1.5 truncate max-w-[200px]">
+                  <MapPin className="w-3.5 h-3.5 text-[#356B8C] shrink-0" />
                   <span className="truncate">{selectedIncident.landmark}</span>
                 </div>
 
                 <button
                   onClick={() => onSelectIncident(selectedIncident)}
-                  className="px-3 py-1 rounded-md text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 flex items-center space-x-1 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#20A39E] hover:bg-[#177e7a] flex items-center space-x-1.5 transition-all shadow-xs"
                 >
                   <span>Inspect Ticket</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -709,14 +659,14 @@ export default function IncidentMap({
 
       </div>
 
-      {/* Footer Info / Empty Notice */}
-      <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 gap-2">
+      {/* Footer Info / Live sync line */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-[#697586] gap-2 px-1">
         <div className="flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span className="w-2 h-2 rounded-full bg-[#25855A]"></span>
           <span>Live feed auto-refreshes seamlessly without page reload.</span>
         </div>
         <div className="flex items-center space-x-4">
-          <span className="text-slate-400">Click any pulsing marker to inspect live dispatch status</span>
+          <span>Click any marker to inspect live municipal dispatch status.</span>
         </div>
       </div>
 

@@ -275,96 +275,96 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#111726] rounded-lg shadow-2xl border border-[#1e293b] text-white overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-elevated border border-[#E4E9EF] text-[#172B3A] overflow-hidden my-6">
         
         {/* Header */}
-        <div className="px-5 py-3.5 bg-[#0d131f] border-b border-[#1e293b] flex items-center justify-between">
+        <div className="px-6 py-4 bg-white border-b border-[#E4E9EF] flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-md text-blue-400">
-              <ShieldAlert className="w-4 h-4" />
+            <div className="p-2.5 bg-[#E6F7F6] border border-[#B2EBE8] rounded-xl text-[#20A39E]">
+              <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-800/60">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#E6F7F6] text-[#188B87] border border-[#B2EBE8]">
                   Citizen Hazard Intake
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               </div>
-              <h2 className="text-sm sm:text-base font-semibold text-slate-100 mt-0.5">
+              <h2 className="text-base sm:text-lg font-bold text-[#183B56] mt-0.5">
                 Report Infrastructure Hazard
               </h2>
             </div>
           </div>
           <button
             onClick={handleResetAndClose}
-            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors"
+            className="p-2 rounded-lg text-[#697586] hover:text-[#183B56] hover:bg-[#F7F8FA] transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 sm:p-6 max-h-[82vh] overflow-y-auto space-y-5">
+        <div className="p-6 max-h-[82vh] overflow-y-auto space-y-5">
           
           {/* ============================================================== */}
           {/* SUCCESS SCREEN */}
           {/* ============================================================== */}
           {submissionSuccess ? (
             <div className="text-center py-6 space-y-5">
-              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-6 h-6" />
+              <div className="w-14 h-14 bg-[#EAF5EF] border border-[#C5E5D3] text-[#25855A] rounded-2xl flex items-center justify-center mx-auto shadow-2xs">
+                <CheckCircle2 className="w-7 h-7" />
               </div>
 
               <div>
-                <span className="text-[11px] uppercase font-mono font-bold tracking-wider text-emerald-400">
+                <span className="text-[11px] uppercase font-mono font-bold tracking-wider text-[#25855A]">
                   ✓ Dispatch Confirmed & Logged
                 </span>
-                <h3 className="text-lg font-bold text-slate-100 mt-1">
+                <h3 className="text-xl font-bold text-[#183B56] mt-1">
                   Incident Submitted to Municipal Dispatch
                 </h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+                <p className="text-xs text-[#697586] max-w-md mx-auto mt-1 leading-relaxed">
                   Your hazard report has been recorded in the central municipal incident database and assigned to active field triage.
                 </p>
               </div>
 
               {/* Reference ID Card */}
-              <div className="bg-[#0b0f17] border border-[#1e293b] rounded-lg p-4 max-w-md mx-auto space-y-2">
-                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
+              <div className="bg-[#F7F8FA] border border-[#E4E9EF] rounded-xl p-5 max-w-md mx-auto space-y-2.5 shadow-2xs">
+                <span className="text-[11px] font-bold text-[#697586] uppercase tracking-wider block">
                   Official Tracking Reference Code
                 </span>
                 <div className="flex items-center justify-center space-x-3">
-                  <span className="text-2xl font-mono font-bold text-blue-400 tracking-wider">
+                  <span className="text-2xl font-mono font-bold text-[#183B56] tracking-wider">
                     {submissionSuccess.reference_id}
                   </span>
                   <button
                     onClick={handleCopyId}
-                    className="p-1.5 text-slate-300 hover:text-white bg-[#111726] border border-[#1e293b] rounded-md hover:bg-[#1e293b] transition-colors"
+                    className="p-2 text-[#183B56] hover:text-[#20A39E] bg-white border border-[#E4E9EF] rounded-lg hover:bg-[#F7F8FA] shadow-2xs transition-colors"
                     title="Copy Reference ID"
                   >
-                    {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                    {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[#697586]">
                   Save this code to check real-time field crew deployment and photographic repair confirmation.
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   onClick={() => {
                     const inc = submissionSuccess;
                     handleResetAndClose();
                     if (onViewIncident) onViewIncident(inc);
                   }}
-                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-md text-xs flex items-center justify-center space-x-1.5 transition-colors"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#20A39E] hover:bg-[#188B87] text-white font-semibold rounded-lg text-xs flex items-center justify-center space-x-2 shadow-xs transition-colors"
                 >
                   <span>Track Status Pipeline Now</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={handleResetAndClose}
-                  className="w-full sm:w-auto px-4 py-2 bg-[#0b0f17] hover:bg-[#1e293b] text-slate-300 font-medium rounded-md text-xs border border-[#1e293b] transition-colors"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-[#F7F8FA] text-[#183B56] font-semibold rounded-lg text-xs border border-[#E4E9EF] shadow-2xs transition-colors"
                 >
                   Return to Dashboard
                 </button>
@@ -378,27 +378,27 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* DUPLICATE WARNING INTERSTITIAL */}
               {duplicateWarning && (
-                <div className="p-4 bg-amber-950/40 border border-amber-500/50 rounded-2xl space-y-3">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-xs font-bold text-amber-300">
+                      <h4 className="text-xs font-bold text-amber-900">
                         Active Incident Already Under Review at this Site
                       </h4>
-                      <p className="text-xs text-amber-200/90 mt-0.5">
+                      <p className="text-xs text-amber-800 mt-0.5">
                         {duplicateWarning.reason}
                       </p>
                     </div>
                   </div>
 
                   {duplicateWarning.existingIncident && (
-                    <div className="p-3 bg-slate-950/80 border border-amber-500/30 rounded-xl text-xs space-y-1">
-                      <div className="flex justify-between font-mono font-bold text-amber-300">
+                    <div className="p-3 bg-white border border-amber-200 rounded-lg text-xs space-y-1 shadow-2xs">
+                      <div className="flex justify-between font-mono font-bold text-amber-800">
                         <span>Ref: {duplicateWarning.existingIncident.reference_id}</span>
-                        <span className="text-slate-300">{duplicateWarning.existingIncident.status}</span>
+                        <span className="text-[#697586]">{duplicateWarning.existingIncident.status}</span>
                       </div>
-                      <p className="font-semibold text-white">{duplicateWarning.existingIncident.title}</p>
-                      <p className="text-slate-400">{duplicateWarning.existingIncident.landmark}, {duplicateWarning.existingIncident.area}</p>
+                      <p className="font-semibold text-[#183B56]">{duplicateWarning.existingIncident.title}</p>
+                      <p className="text-[#697586]">{duplicateWarning.existingIncident.landmark}, {duplicateWarning.existingIncident.area}</p>
                     </div>
                   )}
 
@@ -410,14 +410,14 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                         handleResetAndClose();
                         if (onViewIncident && target) onViewIncident(target);
                       }}
-                      className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg text-xs transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-2xs"
                     >
                       View Existing Report
                     </button>
                     <button
                       type="button"
                       onClick={() => handleSubmit(null, true)}
-                      className="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg text-xs border border-slate-700 transition-colors"
+                      className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-[#F7F8FA] text-[#183B56] font-semibold rounded-lg text-xs border border-[#E4E9EF] transition-colors"
                     >
                       Submit Anyway (Separate Incident)
                     </button>
@@ -427,28 +427,28 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* 1. Hazard Title */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Hazard Headline <span className="text-rose-400">*</span>
+                <label className="block text-xs font-semibold text-[#183B56] mb-1">
+                  Hazard Headline <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g., Live electrical cable fallen across sidewalk"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className={`w-full px-3 py-2 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all ${
-                    validationErrors.title ? 'border-rose-500 bg-rose-950/20' : 'border-[#1e293b]'
+                  className={`w-full px-3.5 py-2.5 rounded-lg bg-white border text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden transition-all shadow-2xs ${
+                    validationErrors.title ? 'border-rose-400 bg-rose-50/30' : 'border-[#E4E9EF]'
                   }`}
                 />
                 {validationErrors.title && (
-                  <p className="text-[11px] text-rose-400 mt-1">{validationErrors.title}</p>
+                  <p className="text-[11px] text-rose-500 font-medium mt-1">{validationErrors.title}</p>
                 )}
               </div>
 
               {/* 2. Category & Urgency Selector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Hazard Classification <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-semibold text-[#183B56] mb-1">
+                    Hazard Classification <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={formData.category}
@@ -456,7 +456,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                       soundFx.playClick();
                       setFormData({ ...formData, category: e.target.value });
                     }}
-                    className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0b0f17] text-xs text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#E4E9EF] bg-white text-xs text-[#172B3A] font-medium focus:border-[#20A39E] focus:outline-hidden shadow-2xs"
                   >
                     {CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -465,19 +465,19 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center justify-between">
-                    <span>Urgency Level <span className="text-rose-400">*</span></span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                  <label className="block text-xs font-semibold text-[#183B56] mb-1 flex items-center justify-between">
+                    <span>Urgency Level <span className="text-rose-500">*</span></span>
+                    <span className="text-[10px] text-[#697586] font-mono">
                       {formData.urgency === 'Critical' ? 'Immediate Threat' : formData.urgency === 'Medium' ? 'High Priority' : 'Standard Queue'}
                     </span>
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2">
                     {['Low', 'Medium', 'Critical'].map((level) => {
                       const isSelected = formData.urgency === level;
                       let activeStyle = '';
-                      if (level === 'Critical') activeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/80';
-                      if (level === 'Medium') activeStyle = 'bg-amber-500/20 text-amber-300 border-amber-500/80';
-                      if (level === 'Low') activeStyle = 'bg-blue-500/20 text-blue-300 border-blue-500/80';
+                      if (level === 'Critical') activeStyle = 'bg-rose-50 text-rose-700 border-rose-300 font-bold shadow-2xs';
+                      if (level === 'Medium') activeStyle = 'bg-amber-50 text-amber-800 border-amber-300 font-bold shadow-2xs';
+                      if (level === 'Low') activeStyle = 'bg-blue-50 text-blue-700 border-blue-300 font-bold shadow-2xs';
 
                       return (
                         <button
@@ -487,10 +487,10 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                             soundFx.playClick();
                             setFormData({ ...formData, urgency: level });
                           }}
-                          className={`py-1.5 px-2 rounded-md text-xs font-medium border transition-colors ${
+                          className={`py-2 px-2.5 rounded-lg text-xs border transition-all ${
                             isSelected
                               ? activeStyle
-                              : 'bg-[#0b0f17] border-[#1e293b] text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                              : 'bg-[#F7F8FA] border-[#E4E9EF] text-[#697586] hover:text-[#183B56] hover:bg-[#EEF2F6] font-medium'
                           }`}
                         >
                           {level}
@@ -503,46 +503,46 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* 3. Description */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Incident Conditions & Threats to Public <span className="text-rose-400">*</span>
+                <label className="block text-xs font-semibold text-[#183B56] mb-1">
+                  Incident Conditions & Threats to Public <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   rows="3"
                   placeholder="Detail exact conditions: exposed wiring, sparking, flooding onto roadway, open deep manhole, or obstructed lanes..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={`w-full px-3 py-2 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all ${
-                    validationErrors.description ? 'border-rose-500 bg-rose-950/20' : 'border-[#1e293b]'
+                  className={`w-full px-3.5 py-2.5 rounded-lg bg-white border text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden transition-all shadow-2xs ${
+                    validationErrors.description ? 'border-rose-400 bg-rose-50/30' : 'border-[#E4E9EF]'
                   }`}
                 />
                 {validationErrors.description && (
-                  <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.description}</p>
+                  <p className="text-[11px] text-rose-500 font-medium mt-1">{validationErrors.description}</p>
                 )}
               </div>
 
               {/* 4. Interactive Leaflet Mini Pin-Picker Map */}
-              <div className="p-3.5 bg-[#0b0f17] rounded-md border border-[#1e293b] space-y-2.5">
+              <div className="p-4 bg-[#F7F8FA] rounded-xl border border-[#E4E9EF] space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center space-x-2">
-                    <Crosshair className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-xs font-medium text-slate-200">Incident Coordinate Pinning</span>
-                    <span className="text-[10px] text-slate-500">(Click on map to drop precise pin)</span>
+                    <Crosshair className="w-4 h-4 text-[#20A39E]" />
+                    <span className="text-xs font-bold text-[#183B56]">Incident Coordinate Pinning</span>
+                    <span className="text-[10px] text-[#697586]">(Click on map to drop precise pin)</span>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleGetLocation}
                     disabled={geoLoading}
-                    className="flex items-center space-x-1.5 text-xs font-medium text-blue-300 hover:text-white bg-[#111726] hover:bg-[#1e293b] border border-[#1e293b] px-2.5 py-1 rounded-md transition-colors"
+                    className="flex items-center space-x-1.5 text-xs font-semibold text-[#183B56] hover:text-[#20A39E] bg-white hover:bg-[#F7F8FA] border border-[#E4E9EF] shadow-2xs px-3 py-1.5 rounded-lg transition-colors"
                   >
                     {geoLoading ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Detecting...</span>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#20A39E]" />
+                        <span>Detecting GPS...</span>
                       </>
                     ) : (
                       <>
-                        <Navigation className="w-3.5 h-3.5 text-blue-400" />
+                        <Navigation className="w-3.5 h-3.5 text-[#20A39E]" />
                         <span>Use My Location</span>
                       </>
                     )}
@@ -550,14 +550,14 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 {/* Quick Zone Presets */}
-                <div className="flex items-center flex-wrap gap-1.5 pt-0.5">
-                  <span className="text-[10px] text-slate-500 uppercase font-semibold mr-1">Quick Sectors:</span>
+                <div className="flex items-center flex-wrap gap-1.5">
+                  <span className="text-[10px] text-[#697586] uppercase font-bold tracking-wider mr-1">Quick Sectors:</span>
                   {PRESET_ZONES.map((zone) => (
                     <button
                       key={zone.name}
                       type="button"
                       onClick={() => handleSelectPresetZone(zone)}
-                      className="text-[11px] px-2 py-0.5 rounded bg-[#111726] hover:bg-[#1e293b] text-slate-300 hover:text-blue-300 border border-[#1e293b] transition-colors"
+                      className="text-[11px] px-2.5 py-1 rounded-md bg-white hover:bg-[#EEF2F6] text-[#183B56] border border-[#E4E9EF] shadow-2xs transition-colors font-medium"
                     >
                       {zone.name}
                     </button>
@@ -565,17 +565,17 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 {/* Mini Leaflet Pin Dropper */}
-                <div className="h-44 sm:h-48 w-full rounded-md overflow-hidden border border-[#1e293b] relative shadow-inner">
+                <div className="h-44 sm:h-48 w-full rounded-xl overflow-hidden border border-[#E4E9EF] relative shadow-2xs">
                   <MapContainer
                     center={currentPinPosition}
                     zoom={13}
                     scrollWheelZoom={false}
                     className="h-full w-full"
-                    style={{ background: '#070d19' }}
+                    style={{ background: '#e5e7eb' }}
                   >
                     <TileLayer
-                      url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-                      attribution="&copy; Google Satellite"
+                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                      attribution="&copy; OpenStreetMap contributors &copy; CARTO"
                     />
                     <MapPinPicker
                       position={currentPinPosition}
@@ -583,53 +583,53 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                     />
                   </MapContainer>
                   
-                  <div className="absolute bottom-2 left-2 z-[400] bg-slate-950/90 px-2 py-1 rounded border border-[#1e293b] text-[10px] font-mono text-blue-300 flex items-center space-x-1.5">
-                    <MapPin className="w-3 h-3 text-blue-400" />
+                  <div className="absolute bottom-2 left-2 z-[400] bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-md border border-[#E4E9EF] text-[10px] font-mono font-semibold text-[#183B56] flex items-center space-x-1.5 shadow-xs">
+                    <MapPin className="w-3 h-3 text-[#20A39E]" />
                     <span>Lat: {formData.latitude} | Lng: {formData.longitude}</span>
                   </div>
                 </div>
 
                 {geoError && (
-                  <p className="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-900/50">
+                  <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
                     {geoError}
                   </p>
                 )}
 
                 {/* Landmark & Area text inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                      Street / Landmark <span className="text-rose-400">*</span>
+                    <label className="block text-[11px] font-semibold text-[#183B56] mb-1">
+                      Street / Landmark <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g., Near City Hall Metro Exit 2"
                       value={formData.landmark}
                       onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
-                      className={`w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all ${
-                        validationErrors.landmark ? 'border-rose-500' : 'border-[#1e293b]'
+                      className={`w-full px-3 py-2 rounded-lg bg-white border text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden transition-all shadow-2xs ${
+                        validationErrors.landmark ? 'border-rose-400 bg-rose-50/30' : 'border-[#E4E9EF]'
                       }`}
                     />
                     {validationErrors.landmark && (
-                      <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.landmark}</p>
+                      <p className="text-[11px] text-rose-500 font-medium mt-1">{validationErrors.landmark}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-slate-400 mb-1">
-                      Sector / Ward <span className="text-rose-400">*</span>
+                    <label className="block text-[11px] font-semibold text-[#183B56] mb-1">
+                      Sector / Ward <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g., Downtown Sector 4"
                       value={formData.area}
                       onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                      className={`w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all ${
-                        validationErrors.area ? 'border-rose-500' : 'border-[#1e293b]'
+                      className={`w-full px-3 py-2 rounded-lg bg-white border text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden transition-all shadow-2xs ${
+                        validationErrors.area ? 'border-rose-400 bg-rose-50/30' : 'border-[#E4E9EF]'
                       }`}
                     />
                     {validationErrors.area && (
-                      <p className="text-[11px] text-rose-400 mt-0.5">{validationErrors.area}</p>
+                      <p className="text-[11px] text-rose-500 font-medium mt-1">{validationErrors.area}</p>
                     )}
                   </div>
                 </div>
@@ -637,13 +637,13 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* 5. Photo Evidence with Sample Presets */}
               <div className="space-y-2">
-                <label className="block text-xs font-medium text-slate-300">
+                <label className="block text-xs font-semibold text-[#183B56]">
                   Visual Evidence Photo
                 </label>
 
                 {/* Quick Presets */}
                 <div className="flex items-center flex-wrap gap-1.5 mb-1.5">
-                  <span className="text-[10px] text-slate-500">Sample Photos:</span>
+                  <span className="text-[10px] text-[#697586] font-medium">Sample Photos:</span>
                   {SAMPLE_EVIDENCE_PHOTOS.map((sample) => (
                     <button
                       key={sample.label}
@@ -652,7 +652,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                         soundFx.playClick();
                         setFormData({ ...formData, photo_url: sample.url });
                       }}
-                      className="text-[11px] px-2 py-0.5 rounded bg-[#0b0f17] hover:bg-[#1e293b] text-slate-400 hover:text-slate-200 border border-[#1e293b] transition-colors"
+                      className="text-[11px] px-2.5 py-1 rounded-md bg-[#F7F8FA] hover:bg-[#EEF2F6] text-[#183B56] hover:text-[#20A39E] border border-[#E4E9EF] transition-colors font-medium shadow-2xs"
                     >
                       {sample.label}
                     </button>
@@ -665,11 +665,11 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                     placeholder="Paste image URL (https://...)"
                     value={formData.photo_url}
                     onChange={(e) => setFormData({ ...formData, photo_url: e.target.value })}
-                    className="flex-1 px-3 py-1.5 rounded-md bg-[#0b0f17] border border-[#1e293b] text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="flex-1 px-3 py-2 rounded-lg bg-white border border-[#E4E9EF] text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden shadow-2xs"
                   />
                   
-                  <label className="cursor-pointer px-3 py-1.5 bg-[#111726] hover:bg-[#1e293b] border border-[#1e293b] rounded-md text-xs font-medium text-slate-200 flex items-center space-x-1.5 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-blue-400" />
+                  <label className="cursor-pointer px-3 py-2 bg-white hover:bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg text-xs font-semibold text-[#183B56] flex items-center space-x-1.5 shadow-2xs transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-[#20A39E]" />
                     <span>Upload</span>
                     <input
                       type="file"
@@ -681,7 +681,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                 </div>
 
                 {formData.photo_url && (
-                  <div className="mt-2 relative w-24 h-20 rounded-md overflow-hidden border border-[#1e293b] group shadow-sm">
+                  <div className="mt-2 relative w-24 h-20 rounded-lg overflow-hidden border border-[#E4E9EF] group shadow-xs">
                     <img
                       src={formData.photo_url}
                       alt="Preview"
@@ -693,7 +693,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                         soundFx.playClick();
                         setFormData({ ...formData, photo_url: '' });
                       }}
-                      className="absolute top-1 right-1 p-1 bg-black/75 text-white rounded hover:bg-rose-600 transition-colors"
+                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-md hover:bg-rose-600 transition-colors"
                       title="Remove image"
                     >
                       <X className="w-3 h-3" />
@@ -704,7 +704,7 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
 
               {/* 6. Reporter Contact */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[#183B56] mb-1">
                   Reporter Contact (Optional for Dispatch SMS updates)
                 </label>
                 <input
@@ -712,23 +712,23 @@ export default function ReportHazardModal({ isOpen, onClose, onSuccess, onViewIn
                   placeholder="Optional contact phone or email"
                   value={formData.reporter_contact}
                   onChange={(e) => setFormData({ ...formData, reporter_contact: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-md bg-[#0b0f17] border border-[#1e293b] text-xs text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-lg bg-white border border-[#E4E9EF] text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden shadow-2xs"
                 />
               </div>
 
               {/* Form Action Buttons */}
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#1e293b]">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#E4E9EF]">
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-[#697586] hover:text-[#183B56] hover:bg-[#F7F8FA] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-1.5 rounded-md text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 flex items-center space-x-1.5 transition-colors"
+                  className="px-5 py-2.5 rounded-lg text-xs font-semibold text-white bg-[#20A39E] hover:bg-[#188B87] disabled:opacity-50 flex items-center space-x-2 shadow-xs transition-colors"
                 >
                   {loading ? (
                     <>

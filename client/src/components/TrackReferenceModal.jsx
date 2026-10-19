@@ -48,18 +48,18 @@ export default function TrackReferenceModal({ isOpen, onClose, onFoundIncident }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-[#111726] rounded-lg shadow-2xl border border-[#1e293b] text-white overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-elevated border border-[#E4E9EF] text-[#172B3A] overflow-hidden my-6">
         
         {/* Header */}
-        <div className="px-5 py-3.5 bg-[#0d131f] border-b border-[#1e293b] flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-md text-blue-400">
+        <div className="px-6 py-4 bg-white border-b border-[#E4E9EF] flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-[#E6F7F6] border border-[#B2EBE8] rounded-xl text-[#20A39E]">
               <Search className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-slate-100">Track Incident Reference ID</h3>
-              <p className="text-[11px] text-slate-400">Municipal Dispatch Registry</p>
+              <h3 className="font-bold text-base text-[#183B56]">Track Incident Reference ID</h3>
+              <p className="text-[11px] text-[#697586]">Municipal Dispatch Registry</p>
             </div>
           </div>
           <button
@@ -67,21 +67,21 @@ export default function TrackReferenceModal({ isOpen, onClose, onFoundIncident }
               soundFx.playClick();
               onClose();
             }}
-            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors"
+            className="p-2 rounded-lg text-[#697586] hover:text-[#183B56] hover:bg-[#F7F8FA] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-4">
-          <p className="text-xs text-slate-300 leading-relaxed">
+        <div className="p-6 space-y-4">
+          <p className="text-xs text-[#697586] leading-relaxed">
             Enter the tracking code issued at hazard submission to view real-time triage status, field crew deployment, and photographic resolution records.
           </p>
 
-          <form onSubmit={handleSearch} className="space-y-3">
+          <form onSubmit={handleSearch} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[#183B56] mb-1">
                 Incident Reference Code
               </label>
               <input
@@ -92,33 +92,33 @@ export default function TrackReferenceModal({ isOpen, onClose, onFoundIncident }
                   setReferenceId(e.target.value);
                   setError('');
                 }}
-                className="w-full px-3 py-2 rounded-md bg-[#0b0f17] border border-[#1e293b] font-mono text-sm tracking-wider uppercase text-blue-300 placeholder-slate-600 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-white border border-[#E4E9EF] font-mono text-sm tracking-wider uppercase text-[#183B56] placeholder-[#9AA4B2] focus:border-[#20A39E] focus:outline-hidden shadow-2xs transition-all"
                 autoFocus
               />
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-950/30 border border-rose-800/40 rounded-md flex items-center space-x-2 text-xs text-rose-300">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center space-x-2 text-xs text-rose-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="pt-2 flex items-center justify-end space-x-2">
+            <div className="pt-2 flex items-center justify-end space-x-3">
               <button
                 type="button"
                 onClick={() => {
                   soundFx.playClick();
                   onClose();
                 }}
-                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-[#1e293b] rounded-md transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-[#697586] hover:text-[#183B56] hover:bg-[#F7F8FA] rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-1.5 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors flex items-center space-x-1.5 disabled:opacity-50"
+                className="px-5 py-2.5 text-xs font-semibold bg-[#20A39E] hover:bg-[#188B87] text-white rounded-lg shadow-xs transition-colors flex items-center space-x-1.5 disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -136,15 +136,15 @@ export default function TrackReferenceModal({ isOpen, onClose, onFoundIncident }
           </form>
 
           {/* Quick test references */}
-          <div className="pt-2 border-t border-[#1e293b]/70">
-            <span className="text-[11px] text-slate-400 block mb-1.5">Recent Active Records:</span>
-            <div className="flex flex-wrap gap-1.5">
+          <div className="pt-3 border-t border-[#E4E9EF]">
+            <span className="text-[11px] font-semibold text-[#697586] block mb-2">Recent Active Records:</span>
+            <div className="flex flex-wrap gap-2">
               {['CS-2026-1001', 'CS-2026-1002', 'CS-2026-1003'].map((sample) => (
                 <button
                   key={sample}
                   type="button"
                   onClick={() => handleQuickSample(sample)}
-                  className="px-2 py-1 text-[11px] font-mono bg-[#0b0f17] hover:bg-[#1e293b] text-slate-300 border border-[#1e293b] rounded transition-colors"
+                  className="px-2.5 py-1 text-[11px] font-mono font-medium bg-[#F7F8FA] hover:bg-[#EEF2F6] text-[#183B56] border border-[#E4E9EF] rounded-md shadow-2xs transition-colors"
                 >
                   {sample}
                 </button>

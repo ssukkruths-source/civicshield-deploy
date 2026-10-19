@@ -14,7 +14,9 @@ import {
   Lock,
   LogOut,
   ShieldCheck,
-  User
+  User,
+  Menu,
+  X
 } from 'lucide-react';
 import { soundFx } from '../services/soundFx.js';
 
@@ -28,6 +30,7 @@ export default function Navbar({
   onLogout
 }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown on outside click
@@ -46,44 +49,47 @@ export default function Navbar({
   const isAdminOrDispatcher = authUser?.role === 'admin' || authUser?.role === 'dispatcher';
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0d131f] border-b border-[#1e293b] text-slate-100">
+    <header className="sticky top-0 z-40 bg-white border-b border-[#E4E9EF] shadow-[0_1px_3px_0_rgba(24,59,86,0.05)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo & Institutional Municipal Branding */}
+          {/* Logo & Municipal Brand Identity */}
           <div 
-            onClick={() => setActiveView('dashboard')}
-            className="flex items-center space-x-3 cursor-pointer select-none"
+            onClick={() => {
+              soundFx.playClick();
+              setActiveView('dashboard');
+            }}
+            className="flex items-center space-x-3 cursor-pointer select-none group"
           >
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
-              <ShieldAlert className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-lg bg-[#E6F7F6] border border-[#BCE8E6] flex items-center justify-center text-[#20A39E] group-hover:bg-[#20A39E] group-hover:text-white transition-all shadow-xs">
+              <ShieldAlert className="w-5 h-5 transition-transform group-hover:scale-105" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-bold text-base tracking-tight text-white">
-                  Civic<span className="text-sky-400">Shield</span>
+                <span className="font-extrabold text-base tracking-tight text-[#183B56]">
+                  Civic<span className="text-[#20A39E]">Shield</span>
                 </span>
-                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 bg-slate-800/80 rounded border border-slate-700">
-                  Municipal Dispatch 311
+                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-[#356B8C] bg-[#F0F6FA] rounded border border-[#D0E1ED]">
+                  Dispatch 311
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden md:block">
-                City Infrastructure Safety & Utility Outage Registry
+              <p className="text-[11px] text-[#697586] hidden md:block leading-none mt-0.5">
+                Municipal Infrastructure Safety Registry
               </p>
             </div>
           </div>
 
-          {/* Center Navigation Controls: Segmented View Controller */}
-          <nav className="flex items-center space-x-1 sm:space-x-1.5 bg-[#141b29] p-1 rounded-lg border border-[#222d42]">
+          {/* Center Navigation Controls: Modern Segmented Switcher */}
+          <nav className="hidden md:flex items-center space-x-1 bg-[#F0F4F8] p-1 rounded-xl border border-[#E4E9EF]">
             <button
               onClick={() => {
                 soundFx.playRadioChirp();
                 setActiveView('dashboard');
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition-colors ${
+              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-all ${
                 activeView === 'dashboard'
-                  ? 'bg-[#222e44] text-white shadow-xs font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a2336]'
+                  ? 'bg-white text-[#183B56] shadow-sm font-semibold'
+                  : 'text-[#697586] hover:text-[#172B3A] hover:bg-white/60'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -95,10 +101,10 @@ export default function Navbar({
                 soundFx.playRadioChirp();
                 setActiveView('map');
               }}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition-colors relative ${
+              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-all ${
                 activeView === 'map'
-                  ? 'bg-[#222e44] text-white shadow-xs font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a2336]'
+                  ? 'bg-white text-[#183B56] shadow-sm font-semibold'
+                  : 'text-[#697586] hover:text-[#172B3A] hover:bg-white/60'
               }`}
             >
               <Map className="w-3.5 h-3.5" />
@@ -112,26 +118,26 @@ export default function Navbar({
                   soundFx.playRadioChirp();
                   setActiveView('staff');
                 }}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center space-x-1.5 transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-all ${
                   activeView === 'staff'
-                    ? isFieldCrew ? 'bg-amber-600/90 text-white shadow-xs font-semibold' : 'bg-sky-600/90 text-white shadow-xs font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a2336]'
+                    ? isFieldCrew 
+                      ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E] shadow-sm font-semibold' 
+                      : 'bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED] shadow-sm font-semibold'
+                    : 'text-[#697586] hover:text-[#172B3A] hover:bg-white/60'
                 }`}
               >
                 {isFieldCrew ? (
                   <>
-                    <UserCheck className="w-3.5 h-3.5 text-amber-300" />
-                    <span className="hidden sm:inline">Field Workstation</span>
-                    <span className="sm:hidden">Crew</span>
+                    <UserCheck className="w-3.5 h-3.5 text-[#D99A26]" />
+                    <span>Field Workstation</span>
                   </>
                 ) : (
                   <>
-                    <Radio className="w-3.5 h-3.5 text-sky-300" />
-                    <span className="hidden sm:inline">Dispatch Console</span>
-                    <span className="sm:hidden">Dispatch</span>
+                    <Radio className="w-3.5 h-3.5 text-[#20A39E]" />
+                    <span>Dispatch Console</span>
                   </>
                 )}
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#25855A] animate-pulse ml-0.5"></span>
               </button>
             )}
           </nav>
@@ -146,14 +152,14 @@ export default function Navbar({
                 soundFx.setEnabled(next);
                 if (next) soundFx.playRadioChirp();
               }}
-              className="p-1.5 text-slate-400 hover:text-slate-200 bg-[#141b29] hover:bg-[#1a2336] border border-[#222d42] rounded-md transition-colors"
+              className="p-2 text-[#697586] hover:text-[#183B56] hover:bg-[#F0F4F8] border border-transparent hover:border-[#E4E9EF] rounded-lg transition-colors"
               title={soundFx.isEnabled() ? 'Mute Interface Audio' : 'Enable Interface Audio'}
               aria-label="Toggle Sound Effects"
             >
               {soundFx.isEnabled() ? (
-                <Volume2 className="w-3.5 h-3.5 text-sky-400" />
+                <Volume2 className="w-4 h-4 text-[#20A39E]" />
               ) : (
-                <VolumeX className="w-3.5 h-3.5 text-slate-500" />
+                <VolumeX className="w-4 h-4 text-[#94A3B8]" />
               )}
             </button>
 
@@ -163,10 +169,10 @@ export default function Navbar({
                 soundFx.playClick();
                 onOpenTrack();
               }}
-              className="hidden md:flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-300 bg-[#141b29] hover:bg-[#1a2336] border border-[#222d42] rounded-md transition-colors"
+              className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-[#183B56] bg-white hover:bg-[#F7F8FA] border border-[#E4E9EF] hover:border-[#CBD5E1] rounded-lg transition-all shadow-xs"
               title="Track incident status with Reference ID"
             >
-              <Search className="w-3 h-3 text-slate-400" />
+              <Search className="w-3.5 h-3.5 text-[#697586]" />
               <span>Track ID</span>
             </button>
 
@@ -176,9 +182,9 @@ export default function Navbar({
                 soundFx.playAlert();
                 onOpenReport();
               }}
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-md shadow-xs transition-colors"
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#20A39E] hover:bg-[#177e7a] active:bg-[#136663] rounded-lg shadow-sm hover:shadow transition-all"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Report Hazard</span>
               <span className="sm:hidden">Report</span>
             </button>
@@ -193,80 +199,82 @@ export default function Navbar({
                   soundFx.playClick();
                   if (onOpenLogin) onOpenLogin();
                 }}
-                className="flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-[#141b29] hover:bg-[#1b2538] border border-[#26354d] hover:border-sky-500/50 rounded-md transition-all shadow-xs"
+                className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-[#183B56] hover:text-white bg-[#F0F6FA] hover:bg-[#183B56] border border-[#D0E1ED] hover:border-[#183B56] rounded-lg transition-all shadow-xs"
                 title="Municipal staff & field response login"
               >
-                <Lock className="w-3 h-3 text-amber-400" />
+                <Lock className="w-3.5 h-3.5 text-[#356B8C]" />
                 <span className="hidden sm:inline">Staff Login</span>
-                <span className="sm:hidden">Login</span>
+                <span className="sm:hidden">Staff</span>
               </button>
             ) : (
               /* Authenticated Staff: Officer Badge & Logout Control */
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                  className={`flex items-center space-x-2 px-2.5 py-1.5 text-xs rounded-md border transition-colors ${
+                  className={`flex items-center space-x-2 px-3 py-1.5 text-xs rounded-lg border transition-all ${
                     isFieldCrew
-                      ? 'bg-amber-950/40 border-amber-800/80 text-amber-200 hover:bg-amber-900/40'
-                      : 'bg-sky-950/40 border-sky-800/80 text-sky-200 hover:bg-sky-900/40'
+                      ? 'bg-[#FEF9EE] border-[#F9DE9E] text-[#D99A26] hover:bg-[#FDF4DC]'
+                      : 'bg-[#F0F6FA] border-[#D0E1ED] text-[#183B56] hover:bg-[#E3EFF7]'
                   }`}
                   title="Active Authorized Terminal Identity"
                 >
-                  <span className={`w-2 h-2 rounded-full ${isFieldCrew ? 'bg-amber-400' : 'bg-sky-400'} animate-pulse`}></span>
+                  <span className={`w-2 h-2 rounded-full ${isFieldCrew ? 'bg-[#D99A26]' : 'bg-[#20A39E]'} animate-pulse`}></span>
                   <div className="flex flex-col text-left leading-none">
-                    <span className="font-bold text-[11px] text-white truncate max-w-[110px] sm:max-w-[140px]">
+                    <span className="font-semibold text-xs text-[#183B56] truncate max-w-[110px] sm:max-w-[140px]">
                       {authUser.name || authUser.badge_number}
                     </span>
-                    <span className="text-[9px] text-slate-400 capitalize font-mono">
+                    <span className="text-[10px] text-[#697586] capitalize font-mono mt-0.5">
                       {authUser.badge_number || authUser.role}
                     </span>
                   </div>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#697586]" />
                 </button>
 
                 {profileDropdownOpen && (
-                  <div className="absolute right-0 mt-1.5 w-64 bg-[#111726] border border-[#222d42] rounded-xl shadow-2xl py-2 z-50 divide-y divide-[#1e293b]">
-                    <div className="px-3.5 py-2">
+                  <div className="absolute right-0 mt-2 w-64 bg-white border border-[#E4E9EF] rounded-xl shadow-panel py-2 z-50 divide-y divide-[#E4E9EF] animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-4 py-2.5">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold text-[#697586] uppercase tracking-wider">
                           Active Workstation
                         </span>
                         <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold uppercase ${
-                          isFieldCrew ? 'bg-amber-950 text-amber-400 border border-amber-800' : 'bg-sky-950 text-sky-400 border border-sky-800'
+                          isFieldCrew 
+                            ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E]' 
+                            : 'bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED]'
                         }`}>
                           {authUser.role.replace('_', ' ')}
                         </span>
                       </div>
-                      <div className="text-xs font-bold text-white">{authUser.name}</div>
-                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">{authUser.email}</div>
-                      <div className="text-[10px] text-slate-500 mt-1">{authUser.department || 'Municipal Operations Bureau'}</div>
+                      <div className="text-xs font-bold text-[#183B56]">{authUser.name}</div>
+                      <div className="text-[11px] text-[#697586] font-mono mt-0.5">{authUser.email}</div>
+                      <div className="text-[10px] text-[#697586] mt-1">{authUser.department || 'Municipal Operations Bureau'}</div>
                     </div>
 
-                    <div className="p-1">
+                    <div className="p-1.5">
                       <button
                         onClick={() => {
                           setProfileDropdownOpen(false);
                           setActiveView('staff');
                         }}
-                        className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-slate-200 hover:bg-[#162032] rounded-md transition-colors"
+                        className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-medium text-[#183B56] hover:bg-[#F0F6FA] rounded-lg transition-colors"
                       >
                         {isFieldCrew ? (
-                          <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                          <UserCheck className="w-3.5 h-3.5 text-[#D99A26]" />
                         ) : (
-                          <Radio className="w-3.5 h-3.5 text-sky-400" />
+                          <Radio className="w-3.5 h-3.5 text-[#20A39E]" />
                         )}
                         <span>Open {isFieldCrew ? 'Field Response Terminal' : 'Dispatch Console'}</span>
                       </button>
                     </div>
 
-                    <div className="p-1">
+                    <div className="p-1.5">
                       <button
                         onClick={() => {
                           soundFx.playClick();
                           setProfileDropdownOpen(false);
                           if (onLogout) onLogout();
                         }}
-                        className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-950/40 rounded-md transition-colors"
+                        className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-medium text-[#D64545] hover:bg-[#FDF2F2] rounded-lg transition-colors"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>Lock Terminal & Log Out</span>
@@ -277,9 +285,83 @@ export default function Navbar({
               </div>
             )}
 
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-[#697586] hover:text-[#183B56] hover:bg-[#F0F4F8] rounded-lg border border-[#E4E9EF]"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+
           </div>
 
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#E4E9EF] py-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  soundFx.playRadioChirp();
+                  setActiveView('dashboard');
+                  setMobileMenuOpen(false);
+                }}
+                className={`px-3 py-2 text-xs font-medium rounded-lg flex items-center space-x-2 ${
+                  activeView === 'dashboard' ? 'bg-[#183B56] text-white' : 'bg-[#F0F4F8] text-[#183B56]'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>Incident Feed</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  soundFx.playRadioChirp();
+                  setActiveView('map');
+                  setMobileMenuOpen(false);
+                }}
+                className={`px-3 py-2 text-xs font-medium rounded-lg flex items-center space-x-2 ${
+                  activeView === 'map' ? 'bg-[#183B56] text-white' : 'bg-[#F0F4F8] text-[#183B56]'
+                }`}
+              >
+                <Map className="w-4 h-4" />
+                <span>Geospatial Radar</span>
+              </button>
+            </div>
+
+            {isStaffLoggedIn && (
+              <button
+                onClick={() => {
+                  soundFx.playRadioChirp();
+                  setActiveView('staff');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED]"
+              >
+                <span className="flex items-center space-x-2">
+                  <Radio className="w-4 h-4 text-[#20A39E]" />
+                  <span>{isFieldCrew ? 'Field Response Terminal' : 'Municipal Dispatch Console'}</span>
+                </span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#25855A] text-white font-bold">ACTIVE</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                onOpenTrack();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full px-3 py-2 text-xs font-medium rounded-lg flex items-center space-x-2 bg-white border border-[#E4E9EF] text-[#183B56]"
+            >
+              <Search className="w-4 h-4 text-[#697586]" />
+              <span>Track Reference ID</span>
+            </button>
+          </div>
+        )}
+
       </div>
     </header>
   );

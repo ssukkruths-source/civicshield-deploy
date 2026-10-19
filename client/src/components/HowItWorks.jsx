@@ -30,15 +30,15 @@ export default function HowItWorks({ onOpenReport }) {
   ];
 
   return (
-    <section aria-labelledby="how-it-works-title" className="bg-[#111726] rounded-xl border border-[#1e293b] p-6 sm:p-8">
+    <section aria-labelledby="how-it-works-title" className="bg-white rounded-2xl border border-[#E4E9EF] p-6 sm:p-8 shadow-card">
       <div className="max-w-2xl mb-6">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-400">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#20A39E]">
           Standard Operating Procedures
         </span>
-        <h2 id="how-it-works-title" className="text-lg sm:text-xl font-bold text-white mt-1">
+        <h2 id="how-it-works-title" className="text-xl sm:text-2xl font-extrabold text-[#183B56] mt-1 tracking-tight">
           Municipal Emergency Dispatch & Resolution SLA
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-[#697586] mt-1.5 leading-relaxed">
           Every citizen report directly feeds the municipal rapid-response engine with complete audit transparency.
         </p>
       </div>
@@ -47,21 +47,21 @@ export default function HowItWorks({ onOpenReport }) {
         {steps.map((step, idx) => {
           const Icon = step.icon;
           return (
-            <div key={idx} className="bg-[#0d131f] border border-[#1e293b] rounded-lg p-4 flex flex-col justify-between">
+            <div key={idx} className="bg-[#F7F8FA] border border-[#E4E9EF] hover:border-[#CBD5E1] rounded-xl p-4 sm:p-5 flex flex-col justify-between transition-all hover:bg-white hover:shadow-card group">
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-8 h-8 rounded-md bg-[#162032] border border-[#22314a] text-sky-400 flex items-center justify-center font-bold text-xs">
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E4E9EF] text-[#20A39E] flex items-center justify-center font-bold text-xs shadow-xs group-hover:bg-[#20A39E] group-hover:text-white transition-colors">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className="font-mono text-xs font-semibold text-slate-400">
+                  <span className="font-mono text-xs font-bold text-[#356B8C]">
                     PHASE {step.num}
                   </span>
                 </div>
 
-                <h3 className="font-semibold text-xs text-slate-200 mb-1.5">
+                <h3 className="font-bold text-sm text-[#183B56] mb-1.5">
                   {step.title}
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-[#697586] leading-relaxed">
                   {step.desc}
                 </p>
               </div>
@@ -70,17 +70,17 @@ export default function HowItWorks({ onOpenReport }) {
         })}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+      <div className="mt-6 pt-4 border-t border-[#E4E9EF] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#697586]">
         <div className="flex items-center space-x-2">
-          <Shield className="w-4 h-4 text-sky-400 shrink-0" />
+          <Shield className="w-4 h-4 text-[#20A39E] shrink-0" />
           <span>Service Level Guarantee: High-risk electrical & water incidents dispatched within 60 minutes.</span>
         </div>
         <button
           onClick={onOpenReport}
-          className="font-medium text-sky-400 hover:text-sky-300 flex items-center space-x-1 shrink-0"
+          className="font-semibold text-[#20A39E] hover:text-[#177e7a] flex items-center space-x-1 shrink-0 group transition-colors"
         >
           <span>File a Hazard Report</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </button>
       </div>
     </section>

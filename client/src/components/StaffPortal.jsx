@@ -201,34 +201,34 @@ export default function StaffPortal({
   const displayedIncidents = incidents;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       
       {/* Portal Top Institutional Header */}
-      <div className="bg-[#111726] rounded-lg border border-[#1e293b] p-5 text-white">
+      <div className="bg-white rounded-2xl border border-[#E4E9EF] p-6 text-[#172B3A] shadow-card">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
                 isFieldCrew 
-                  ? 'bg-amber-950 text-amber-300 border-amber-800' 
-                  : 'bg-sky-950 text-sky-300 border-sky-800'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                  : 'bg-[#E6F7F6] text-[#188B87] border-[#B2EBE8]'
               }`}>
                 {isFieldCrew ? 'Field Response Terminal' : 'Municipal Central Dispatch'}
               </span>
-              <span className="text-xs text-slate-300 font-mono flex items-center space-x-1">
-                <span className="text-slate-500">Badge:</span>
-                <span className="text-white font-semibold">{activeBadge}</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-300">{activeOfficerName}</span>
+              <span className="text-xs text-[#697586] font-mono flex items-center space-x-1.5">
+                <span className="text-[#9AA4B2]">Badge:</span>
+                <span className="text-[#183B56] font-bold">{activeBadge}</span>
+                <span className="text-[#CBD5E1]">•</span>
+                <span className="text-[#183B56] font-medium">{activeOfficerName}</span>
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white mt-1.5 flex items-center space-x-2">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#183B56] mt-1.5 flex items-center space-x-2.5">
               <span>{isFieldCrew ? 'Field Crew Response Workstation' : 'Municipal Dispatch & Triage Console'}</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-normal">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EAF5EF] border border-[#C5E5D3] text-[#25855A] font-semibold">
                 Terminal Active
               </span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5 max-w-2xl">
+            <p className="text-xs text-[#697586] mt-1 max-w-2xl leading-relaxed">
               {isFieldCrew
                 ? `Active unit assigned to ${activeDept}. Review assigned hazard incidents, verify conditions on-site, cordon off danger zones, and submit photo resolution proof.`
                 : `Operating under ${activeDept}. Prioritize incoming citizen reports, acknowledge emergency status, and dispatch certified municipal utility repair teams.`}
@@ -236,23 +236,23 @@ export default function StaffPortal({
           </div>
 
           {/* Right Header Controls: Admin toggle & Log Out */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {/* If Admin, allow toggling views for supervision */}
             {isAdmin && (
-              <div className="flex items-center bg-[#0d131f] p-1 rounded-md border border-[#1e293b]">
+              <div className="flex items-center bg-[#F7F8FA] p-1 rounded-xl border border-[#E4E9EF] shadow-2xs">
                 <button
                   onClick={() => {
                     soundFx.playClick();
                     setUserRole('dispatcher');
                   }}
-                  className={`px-2.5 py-1 rounded text-xs font-medium flex items-center space-x-1 transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
                     userRole === 'dispatcher'
-                      ? 'bg-sky-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#183B56] text-white shadow-2xs'
+                      : 'text-[#697586] hover:text-[#183B56]'
                   }`}
                   title="Supervisor: View as Dispatcher"
                 >
-                  <Radio className="w-3 h-3" />
+                  <Radio className="w-3.5 h-3.5" />
                   <span>Dispatch</span>
                 </button>
                 <button
@@ -260,14 +260,14 @@ export default function StaffPortal({
                     soundFx.playClick();
                     setUserRole('field_crew');
                   }}
-                  className={`px-2.5 py-1 rounded text-xs font-medium flex items-center space-x-1 transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all ${
                     userRole === 'field_crew'
-                      ? 'bg-amber-600 text-white font-semibold'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#20A39E] text-white shadow-2xs'
+                      : 'text-[#697586] hover:text-[#183B56]'
                   }`}
                   title="Supervisor: View as Field Crew"
                 >
-                  <UserCheck className="w-3 h-3" />
+                  <UserCheck className="w-3.5 h-3.5" />
                   <span>Crew</span>
                 </button>
               </div>
@@ -279,33 +279,33 @@ export default function StaffPortal({
                 soundFx.playClick();
                 if (onLogout) onLogout();
               }}
-              className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/80 flex items-center space-x-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs flex items-center space-x-1.5 transition-colors"
               title="Lock terminal and sign out"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 text-rose-600" />
               <span>Lock Terminal</span>
             </button>
           </div>
         </div>
 
         {actionSuccess && (
-          <div className="mt-3 p-2.5 bg-emerald-950/80 border border-emerald-800 rounded-md text-xs text-emerald-200 flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="mt-4 p-3 bg-[#EAF5EF] border border-[#C5E5D3] rounded-xl text-xs text-[#25855A] flex items-center space-x-2 font-medium">
+            <CheckCircle2 className="w-4 h-4 text-[#25855A] shrink-0" />
             <span>{actionSuccess}</span>
           </div>
         )}
       </div>
 
       {/* Filter and Search Toolbar */}
-      <div className="bg-[#111726] p-3 rounded-lg border border-[#1e293b] flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-[#E4E9EF] shadow-card flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="flex-1 w-full relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-3.5 h-3.5 text-[#697586] absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Search by Reference ID, title, landmark, or sector..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-sky-500"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:outline-hidden focus:border-[#20A39E] focus:bg-white transition-all shadow-2xs"
           />
         </div>
 
@@ -313,7 +313,7 @@ export default function StaffPortal({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-2.5 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
+            className="px-3 py-1.5 bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg text-xs text-[#172B3A] font-medium focus:outline-hidden focus:border-[#20A39E] focus:bg-white shadow-2xs cursor-pointer"
           >
             <option value="">All Statuses</option>
             <option value="Submitted">Submitted (Needs Triage)</option>
@@ -326,7 +326,7 @@ export default function StaffPortal({
           <select
             value={filterUrgency}
             onChange={(e) => setFilterUrgency(e.target.value)}
-            className="px-2.5 py-1.5 bg-[#0d131f] border border-[#1e293b] rounded-md text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
+            className="px-3 py-1.5 bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg text-xs text-[#172B3A] font-medium focus:outline-hidden focus:border-[#20A39E] focus:bg-white shadow-2xs cursor-pointer"
           >
             <option value="">All Urgencies</option>
             <option value="Critical">Critical Priority</option>
@@ -337,33 +337,33 @@ export default function StaffPortal({
       </div>
 
       {/* Incident Dispatch Queue Container */}
-      <div className="bg-[#111726] rounded-lg border border-[#1e293b] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#1e293b] flex items-center justify-between bg-[#0d131f]">
-          <div className="flex items-center space-x-2">
-            <h3 className="font-semibold text-xs text-slate-200 uppercase tracking-wider">
+      <div className="bg-white rounded-2xl border border-[#E4E9EF] overflow-hidden shadow-card">
+        <div className="px-6 py-4 border-b border-[#E4E9EF] flex items-center justify-between bg-[#F7F8FA]">
+          <div className="flex items-center space-x-2.5">
+            <h3 className="font-bold text-xs text-[#183B56] uppercase tracking-wider">
               {isFieldCrew ? 'Field Assignment Queue' : 'Active Dispatch Triage Queue'}
             </h3>
-            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#182338] text-sky-300 border border-[#263753]">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E6F7F6] text-[#188B87] border border-[#B2EBE8]">
               {displayedIncidents.length} tickets
             </span>
           </div>
-          <span className="text-[11px] text-slate-400 hidden sm:flex items-center space-x-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span className="text-[11px] text-[#697586] hidden sm:flex items-center space-x-1.5 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Real-time Sync Active</span>
           </span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
-            <Loader2 className="w-6 h-6 animate-spin text-sky-400" />
-            <span className="text-xs">Fetching records from Supabase...</span>
+          <div className="p-16 text-center text-[#697586] flex flex-col items-center justify-center space-y-2">
+            <Loader2 className="w-6 h-6 animate-spin text-[#20A39E]" />
+            <span className="text-xs font-semibold text-[#183B56]">Fetching records from municipal database...</span>
           </div>
         ) : displayedIncidents.length === 0 ? (
-          <div className="p-10 text-center text-slate-500 text-xs">
+          <div className="p-12 text-center text-[#697586] text-xs font-medium">
             No active incidents matching the filter criteria.
           </div>
         ) : (
-          <div className="divide-y divide-[#1e293b]">
+          <div className="divide-y divide-[#E4E9EF]">
             {displayedIncidents.map((incident) => {
               const CategoryIcon = getCategoryIcon(incident.category);
               const isExpanded = expandedIncidentId === incident.id;
@@ -371,43 +371,43 @@ export default function StaffPortal({
               return (
                 <div 
                   key={incident.id}
-                  className="p-4 hover:bg-[#141b29] transition-colors"
+                  className="p-5 hover:bg-[#F7F8FA] transition-colors"
                 >
                   {/* Top Bar of the Item */}
                   <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
                     
                     {/* Left: Metadata & Header */}
-                    <div className="space-y-1 flex-1">
+                    <div className="space-y-1.5 flex-1">
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono text-xs font-semibold text-slate-300 bg-[#162032] border border-[#22314a] px-2 py-0.5 rounded">
+                        <span className="font-mono text-xs font-bold text-[#183B56] bg-white border border-[#E4E9EF] px-2.5 py-0.5 rounded-md shadow-2xs">
                           {incident.reference_id}
                         </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded border ${getStatusStyle(incident.status)}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${getStatusStyle(incident.status)}`}>
                           {incident.status}
                         </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded ${getUrgencyStyle(incident.urgency)}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${getUrgencyStyle(incident.urgency)}`}>
                           {incident.urgency}
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-[#9AA4B2]">
                           • {formatTimeAgo(incident.created_at)}
                         </span>
                       </div>
 
-                      <h4 className="font-semibold text-sm text-slate-100">
+                      <h4 className="font-bold text-sm text-[#183B56]">
                         {incident.title}
                       </h4>
 
-                      <div className="flex items-center space-x-3 text-xs text-slate-400">
-                        <div className="flex items-center space-x-1">
-                          <CategoryIcon className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{incident.category}</span>
+                      <div className="flex items-center flex-wrap gap-3 text-xs text-[#697586]">
+                        <div className="flex items-center space-x-1.5">
+                          <CategoryIcon className="w-3.5 h-3.5 text-[#697586]" />
+                          <span className="font-medium text-[#172B3A]">{incident.category}</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                        <div className="flex items-center space-x-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-[#9AA4B2]" />
                           <span>{incident.landmark} ({incident.area})</span>
                         </div>
                         {incident.assigned_crew_name && (
-                          <div className="flex items-center space-x-1 text-sky-400">
+                          <div className="flex items-center space-x-1.5 text-[#20A39E] font-semibold">
                             <UserCheck className="w-3.5 h-3.5" />
                             <span>Assigned: {incident.assigned_crew_name}</span>
                           </div>
@@ -416,15 +416,15 @@ export default function StaffPortal({
                     </div>
 
                     {/* Right: Operational Action Buttons */}
-                    <div className="flex items-center flex-wrap gap-1.5">
+                    <div className="flex items-center flex-wrap gap-2">
                       
                       {/* Toggle Details */}
                       <button
                         onClick={() => toggleExpand(incident.id)}
-                        className="px-2.5 py-1 text-xs font-medium text-slate-300 bg-[#162032] hover:bg-[#1d2b42] border border-[#22314a] rounded-md transition-colors flex items-center space-x-1"
+                        className="px-3 py-1.5 text-xs font-semibold text-[#183B56] bg-white hover:bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg shadow-2xs transition-colors flex items-center space-x-1"
                       >
                         <span>{isExpanded ? 'Hide' : 'Inspect'}</span>
-                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                        {isExpanded ? <ChevronDown className="w-3 h-3 text-[#697586]" /> : <ChevronRight className="w-3 h-3 text-[#697586]" />}
                       </button>
 
                       {/* Modal Details Trigger */}
@@ -433,10 +433,10 @@ export default function StaffPortal({
                           soundFx.playClick();
                           onSelectIncident(incident);
                         }}
-                        className="px-2.5 py-1 text-xs font-medium text-slate-300 bg-[#162032] hover:bg-[#1d2b42] border border-[#22314a] rounded-md transition-colors flex items-center space-x-1"
+                        className="px-3 py-1.5 text-xs font-semibold text-[#183B56] bg-white hover:bg-[#F7F8FA] border border-[#E4E9EF] rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
                         title="Open full audit modal"
                       >
-                        <FileText className="w-3 h-3 text-slate-400" />
+                        <FileText className="w-3.5 h-3.5 text-[#20A39E]" />
                         <span>Timeline</span>
                       </button>
 
@@ -447,9 +447,9 @@ export default function StaffPortal({
                             <button
                               disabled={actionLoading}
                               onClick={() => handleAcknowledge(incident)}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-md transition-colors flex items-center space-x-1"
+                              className="px-3 py-1.5 text-xs font-semibold text-white bg-[#183B56] hover:bg-[#122e44] rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
                             >
-                              <Check className="w-3 h-3" />
+                              <Check className="w-3.5 h-3.5" />
                               <span>Acknowledge</span>
                             </button>
                           )}
@@ -460,9 +460,9 @@ export default function StaffPortal({
                                 soundFx.playClick();
                                 setAssignModalIncident(incident);
                               }}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-md transition-colors flex items-center space-x-1"
+                              className="px-3 py-1.5 text-xs font-semibold text-white bg-[#20A39E] hover:bg-[#188B87] rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
                             >
-                              <UserPlus className="w-3 h-3" />
+                              <UserPlus className="w-3.5 h-3.5" />
                               <span>{incident.assigned_crew_id ? 'Reassign' : 'Dispatch'}</span>
                             </button>
                           )}
@@ -478,9 +478,9 @@ export default function StaffPortal({
                                 soundFx.playClick();
                                 setVerificationModalIncident(incident);
                               }}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-md transition-colors flex items-center space-x-1"
+                              className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
                             >
-                              <UserCheck className="w-3 h-3" />
+                              <UserCheck className="w-3.5 h-3.5" />
                               <span>Mark On-Site</span>
                             </button>
                           )}
@@ -491,9 +491,9 @@ export default function StaffPortal({
                                 soundFx.playClick();
                                 setResolutionModalIncident(incident);
                               }}
-                              className="px-2.5 py-1 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-md transition-colors flex items-center space-x-1"
+                              className="px-3 py-1.5 text-xs font-semibold text-white bg-[#25855A] hover:bg-[#1d6b48] rounded-lg shadow-xs transition-colors flex items-center space-x-1.5"
                             >
-                              <CheckCircle2 className="w-3 h-3" />
+                              <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>Mark Resolved</span>
                             </button>
                           )}
@@ -505,21 +505,21 @@ export default function StaffPortal({
 
                   {/* Expandable Details Drawer */}
                   {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-[#1e293b] bg-[#0d131f] p-3.5 rounded-md space-y-3 text-xs">
+                    <div className="mt-4 pt-4 border-t border-[#E4E9EF] bg-[#F7F8FA] p-4 rounded-xl space-y-3 text-xs shadow-2xs">
                       
                       <div>
-                        <span className="font-semibold text-slate-400 text-[11px] uppercase tracking-wider block mb-1">
+                        <span className="font-bold text-[#697586] text-[11px] uppercase tracking-wider block mb-1">
                           Full Hazard Description:
                         </span>
-                        <p className="text-slate-300 bg-[#111726] p-2.5 rounded border border-[#1e293b] leading-relaxed">
+                        <p className="text-[#172B3A] bg-white p-3 rounded-lg border border-[#E4E9EF] leading-relaxed shadow-2xs">
                           {incident.description}
                         </p>
                       </div>
 
                       {incident.verification_notes && (
-                        <div className="p-2.5 bg-amber-950/40 border border-amber-800 rounded text-amber-200 space-y-1">
-                          <span className="font-semibold flex items-center space-x-1.5 text-amber-300">
-                            <UserCheck className="w-3.5 h-3.5" />
+                        <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-amber-900 space-y-1">
+                          <span className="font-bold flex items-center space-x-1.5 text-amber-800">
+                            <UserCheck className="w-3.5 h-3.5 text-amber-700" />
                             <span>On-Site Verification Findings:</span>
                           </span>
                           <p>{incident.verification_notes}</p>
@@ -527,14 +527,14 @@ export default function StaffPortal({
                       )}
 
                       {incident.resolution_notes && (
-                        <div className="p-2.5 bg-emerald-950/40 border border-emerald-800 rounded text-emerald-200 space-y-1">
-                          <span className="font-semibold flex items-center space-x-1.5 text-emerald-300">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                        <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-900 space-y-1">
+                          <span className="font-bold flex items-center space-x-1.5 text-emerald-800">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                             <span>Resolution & Completed Repairs:</span>
                           </span>
                           <p>{incident.resolution_notes}</p>
                           {incident.resolved_at && (
-                            <p className="text-[10px] text-emerald-400 mt-1">Resolved at: {new Date(incident.resolved_at).toLocaleString()}</p>
+                            <p className="text-[10px] text-emerald-700 mt-1 font-semibold">Resolved at: {new Date(incident.resolved_at).toLocaleString()}</p>
                           )}
                         </div>
                       )}
@@ -542,15 +542,15 @@ export default function StaffPortal({
                       {/* Photo preview */}
                       {(incident.photo_url || incident.resolution_photo_url) && (
                         <div className="pt-1">
-                          <span className="font-semibold text-slate-400 block mb-1">Evidence Records:</span>
-                          <div className="flex gap-2">
+                          <span className="font-bold text-[#697586] block mb-1.5">Evidence Records:</span>
+                          <div className="flex gap-2.5">
                             {incident.photo_url && (
-                              <div className="h-24 w-24 rounded overflow-hidden border border-[#1e293b]">
+                              <div className="h-24 w-24 rounded-lg overflow-hidden border border-[#E4E9EF] shadow-2xs">
                                 <img src={incident.photo_url} alt="Report Photo" className="w-full h-full object-cover" />
                               </div>
                             )}
                             {incident.resolution_photo_url && (
-                              <div className="h-24 w-24 rounded overflow-hidden border border-emerald-800">
+                              <div className="h-24 w-24 rounded-lg overflow-hidden border border-emerald-300 shadow-2xs">
                                 <img src={incident.resolution_photo_url} alt="Resolution Photo" className="w-full h-full object-cover" />
                               </div>
                             )}
@@ -570,23 +570,23 @@ export default function StaffPortal({
 
       {/* MODAL 1: ASSIGN FIELD CREW (DISPATCHER) */}
       {assignModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
-            <h3 className="font-semibold text-sm text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#E4E9EF] space-y-4 text-[#172B3A] shadow-elevated">
+            <h3 className="font-bold text-base text-[#183B56]">
               Dispatch Field Crew Unit
             </h3>
-            <p className="text-xs text-slate-400">
-              Assign a certified repair team to incident <strong className="font-mono text-slate-200">{assignModalIncident.reference_id}</strong> ({assignModalIncident.category}).
+            <p className="text-xs text-[#697586]">
+              Assign a certified repair team to incident <strong className="font-mono text-[#183B56]">{assignModalIncident.reference_id}</strong> ({assignModalIncident.category}).
             </p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[#183B56] mb-1.5">
                 Select Qualified Response Team
               </label>
               <select
                 value={selectedCrewId}
                 onChange={(e) => setSelectedCrewId(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-slate-200 focus:outline-hidden focus:border-sky-500"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E4E9EF] bg-white text-xs text-[#172B3A] font-medium focus:outline-hidden focus:border-[#20A39E] shadow-2xs"
               >
                 <option value="">-- Choose Field Crew --</option>
                 {staffList.filter(s => s.role === 'field_crew').map(crew => (
@@ -597,11 +597,11 @@ export default function StaffPortal({
               </select>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
+            <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#E4E9EF]">
               <button
                 type="button"
                 onClick={() => setAssignModalIncident(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
+                className="px-4 py-2 text-xs font-semibold text-[#697586] hover:text-[#183B56] bg-white border border-[#E4E9EF] rounded-lg shadow-2xs"
               >
                 Cancel
               </button>
@@ -609,7 +609,7 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading || !selectedCrewId}
                 onClick={handleConfirmAssignment}
-                className="px-4 py-1.5 text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 rounded-md disabled:opacity-50"
+                className="px-5 py-2 text-xs font-semibold text-white bg-[#20A39E] hover:bg-[#188B87] rounded-lg shadow-xs disabled:opacity-50"
               >
                 {actionLoading ? 'Dispatching...' : 'Deploy Unit'}
               </button>
@@ -620,34 +620,34 @@ export default function StaffPortal({
 
       {/* MODAL 2: ON-SITE VERIFICATION (FIELD CREW) */}
       {verificationModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
-            <h3 className="font-semibold text-sm text-white flex items-center space-x-2">
-              <UserCheck className="w-4 h-4 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#E4E9EF] space-y-4 text-[#172B3A] shadow-elevated">
+            <h3 className="font-bold text-base text-[#183B56] flex items-center space-x-2">
+              <UserCheck className="w-5 h-5 text-amber-600" />
               <span>Record On-Site Arrival & Verification</span>
             </h3>
-            <p className="text-xs text-slate-400">
-              Confirm arrival at <strong className="text-slate-200">{verificationModalIncident.landmark}</strong> and log perimeter assessment.
+            <p className="text-xs text-[#697586]">
+              Confirm arrival at <strong className="text-[#183B56]">{verificationModalIncident.landmark}</strong> and log perimeter assessment.
             </p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Field Triage Findings <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-[#183B56] mb-1.5">
+                Field Triage Findings <span className="text-rose-500">*</span>
               </label>
               <textarea
                 rows="3"
                 placeholder="e.g. Arrived on site. Cordoned perimeter with safety cones. Feeder breaker isolated. Beginning repairs."
                 value={verificationNotes}
                 onChange={(e) => setVerificationNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E4E9EF] bg-white text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:outline-hidden focus:border-[#20A39E] shadow-2xs"
               />
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
+            <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#E4E9EF]">
               <button
                 type="button"
                 onClick={() => setVerificationModalIncident(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
+                className="px-4 py-2 text-xs font-semibold text-[#697586] hover:text-[#183B56] bg-white border border-[#E4E9EF] rounded-lg shadow-2xs"
               >
                 Cancel
               </button>
@@ -655,7 +655,7 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading}
                 onClick={handleConfirmVerification}
-                className="px-4 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-500 rounded-md"
+                className="px-5 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-xs"
               >
                 {actionLoading ? 'Logging...' : 'Confirm Arrival'}
               </button>
@@ -666,31 +666,31 @@ export default function StaffPortal({
 
       {/* MODAL 3: RESOLUTION & COMPLETION (FIELD CREW) */}
       {resolutionModalIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="bg-[#111726] rounded-lg p-5 max-w-md w-full border border-[#1e293b] space-y-4 text-white shadow-xl">
-            <h3 className="font-semibold text-sm text-white flex items-center space-x-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full border border-[#E4E9EF] space-y-4 text-[#172B3A] shadow-elevated">
+            <h3 className="font-bold text-base text-[#183B56] flex items-center space-x-2">
+              <CheckCircle2 className="w-5 h-5 text-[#25855A]" />
               <span>Record Incident Resolution</span>
             </h3>
-            <p className="text-xs text-slate-400">
-              Document completed repairs and restore public utility status for incident <strong className="font-mono text-slate-200">{resolutionModalIncident.reference_id}</strong>.
+            <p className="text-xs text-[#697586]">
+              Document completed repairs and restore public utility status for incident <strong className="font-mono text-[#183B56]">{resolutionModalIncident.reference_id}</strong>.
             </p>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Resolution Notes <span className="text-red-400">*</span>
+              <label className="block text-xs font-semibold text-[#183B56] mb-1.5">
+                Resolution Notes <span className="text-rose-500">*</span>
               </label>
               <textarea
                 rows="3"
                 placeholder="e.g. Spliced 440V overhead cable, reattached insulator bracket, and tested phase voltage. Roadway cleared and safe for public access."
                 value={resolutionNotes}
                 onChange={(e) => setResolutionNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E4E9EF] bg-white text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:outline-hidden focus:border-[#20A39E] shadow-2xs"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-[#183B56] mb-1.5">
                 Completion Photo URL (Optional)
               </label>
               <input
@@ -698,15 +698,15 @@ export default function StaffPortal({
                 placeholder="https://... (or demo image link)"
                 value={resolutionPhoto}
                 onChange={(e) => setResolutionPhoto(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-[#1e293b] bg-[#0d131f] text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[#E4E9EF] bg-white text-xs text-[#172B3A] placeholder-[#9AA4B2] focus:outline-hidden focus:border-[#20A39E] shadow-2xs"
               />
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#1e293b]">
+            <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#E4E9EF]">
               <button
                 type="button"
                 onClick={() => setResolutionModalIncident(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-[#0d131f] border border-[#1e293b] rounded-md"
+                className="px-4 py-2 text-xs font-semibold text-[#697586] hover:text-[#183B56] bg-white border border-[#E4E9EF] rounded-lg shadow-2xs"
               >
                 Cancel
               </button>
@@ -714,7 +714,7 @@ export default function StaffPortal({
                 type="button"
                 disabled={actionLoading}
                 onClick={handleConfirmResolution}
-                className="px-4 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-md"
+                className="px-5 py-2 text-xs font-semibold text-white bg-[#25855A] hover:bg-[#1d6b48] rounded-lg shadow-xs"
               >
                 {actionLoading ? 'Saving...' : 'Mark Resolved'}
               </button>
