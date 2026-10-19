@@ -14,7 +14,10 @@ import {
   ChevronDown, 
   Check, 
   MapPin, 
-  Image as ImageIcon 
+  Image as ImageIcon,
+  LogOut,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import { getStatusStyle, getUrgencyStyle, formatTimeAgo, getCategoryIcon } from './IncidentCard.jsx';
@@ -25,7 +28,9 @@ export default function StaffPortal({
   setUserRole, 
   onSelectIncident, 
   refreshTrigger, 
-  onIncidentUpdated 
+  onIncidentUpdated,
+  authUser,
+  onLogout
 }) {
   const [incidents, setIncidents] = useState([]);
   const [staffList, setStaffList] = useState([]);
@@ -188,6 +193,11 @@ export default function StaffPortal({
   };
 
   const isFieldCrew = userRole === 'field_crew';
+  const isAdmin = authUser?.role === 'admin';
+  const activeOfficerName = authUser?.name || (isFieldCrew ? 'Alex Rivera (Rapid Crew #4)' : 'Officer Davis');
+  const activeBadge = authUser?.badge_number || (isFieldCrew ? 'FC-402' : 'DSP-104');
+  const activeDept = authUser?.department || (isFieldCrew ? 'Electrical & Utility Infrastructure' : 'Central Emergency Dispatch');
+
   const displayedIncidents = incidents;
 
   return (
@@ -197,55 +207,83 @@ export default function StaffPortal({
       <div className="bg-[#111726] rounded-lg border border-[#1e293b] p-5 text-white">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-sky-950 text-sky-300 border border-sky-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${
+                isFieldCrew 
+                  ? 'bg-amber-950 text-amber-300 border-amber-800' 
+                  : 'bg-sky-950 text-sky-300 border-sky-800'
+              }`}>
                 {isFieldCrew ? 'Field Response Terminal' : 'Municipal Central Dispatch'}
               </span>
-              <span className="text-xs text-slate-400 font-mono">
-                Active ID: {isFieldCrew ? 'Unit Echo-4 (Alex Rivera)' : 'Dispatcher DSP-104 (Officer Davis)'}
+              <span className="text-xs text-slate-300 font-mono flex items-center space-x-1">
+                <span className="text-slate-500">Badge:</span>
+                <span className="text-white font-semibold">{activeBadge}</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-300">{activeOfficerName}</span>
               </span>
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white mt-1">
-              {isFieldCrew ? 'Field Crew Response Workstation' : 'Municipal Dispatch & Triage Console'}
+            <h2 className="text-lg sm:text-xl font-bold text-white mt-1.5 flex items-center space-x-2">
+              <span>{isFieldCrew ? 'Field Crew Response Workstation' : 'Municipal Dispatch & Triage Console'}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 font-normal">
+                Terminal Active
+              </span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5 max-w-2xl">
               {isFieldCrew
-                ? 'Review assigned hazard incidents, verify conditions on-site, cordon off danger zones, and file certified resolution evidence.'
-                : 'Prioritize incoming citizen reports, acknowledge emergency status, and dispatch certified municipal utility repair teams.'}
+                ? `Active unit assigned to ${activeDept}. Review assigned hazard incidents, verify conditions on-site, cordon off danger zones, and submit photo resolution proof.`
+                : `Operating under ${activeDept}. Prioritize incoming citizen reports, acknowledge emergency status, and dispatch certified municipal utility repair teams.`}
             </p>
           </div>
 
-          {/* Toggle Role Directly inside Portal */}
-          <div className="flex items-center bg-[#0d131f] p-1 rounded-md border border-[#1e293b] shrink-0">
+          {/* Right Header Controls: Admin toggle & Log Out */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {/* If Admin, allow toggling views for supervision */}
+            {isAdmin && (
+              <div className="flex items-center bg-[#0d131f] p-1 rounded-md border border-[#1e293b]">
+                <button
+                  onClick={() => {
+                    soundFx.playClick();
+                    setUserRole('dispatcher');
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-medium flex items-center space-x-1 transition-colors ${
+                    userRole === 'dispatcher'
+                      ? 'bg-sky-600 text-white font-semibold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Supervisor: View as Dispatcher"
+                >
+                  <Radio className="w-3 h-3" />
+                  <span>Dispatch</span>
+                </button>
+                <button
+                  onClick={() => {
+                    soundFx.playClick();
+                    setUserRole('field_crew');
+                  }}
+                  className={`px-2.5 py-1 rounded text-xs font-medium flex items-center space-x-1 transition-colors ${
+                    userRole === 'field_crew'
+                      ? 'bg-amber-600 text-white font-semibold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                  title="Supervisor: View as Field Crew"
+                >
+                  <UserCheck className="w-3 h-3" />
+                  <span>Crew</span>
+                </button>
+              </div>
+            )}
+
+            {/* Log Out Terminal Button */}
             <button
               onClick={() => {
                 soundFx.playClick();
-                setUserRole('dispatcher');
-                localStorage.setItem('civicshield_staff_role', 'dispatcher');
+                if (onLogout) onLogout();
               }}
-              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition-colors ${
-                userRole === 'dispatcher'
-                  ? 'bg-sky-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              className="px-3 py-1.5 rounded-md text-xs font-medium bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/80 flex items-center space-x-1.5 transition-colors"
+              title="Lock terminal and sign out"
             >
-              <Radio className="w-3.5 h-3.5" />
-              <span>Dispatcher Console</span>
-            </button>
-            <button
-              onClick={() => {
-                soundFx.playClick();
-                setUserRole('field_crew');
-                localStorage.setItem('civicshield_staff_role', 'field_crew');
-              }}
-              className={`px-3 py-1.5 rounded text-xs font-medium flex items-center space-x-1.5 transition-colors ${
-                userRole === 'field_crew'
-                  ? 'bg-sky-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Field Crew Mobile</span>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Lock Terminal</span>
             </button>
           </div>
         </div>

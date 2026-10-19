@@ -7,6 +7,7 @@ import ReportHazardModal from './components/ReportHazardModal.jsx';
 import IncidentDetailsModal from './components/IncidentDetailsModal.jsx';
 import TrackReferenceModal from './components/TrackReferenceModal.jsx';
 import StaffPortal from './components/StaffPortal.jsx';
+import StaffLogin from './components/StaffLogin.jsx';
 import HowItWorks from './components/HowItWorks.jsx';
 import { api } from './services/api.js';
 import { soundFx } from './services/soundFx.js';
@@ -28,13 +29,33 @@ import {
   ShieldCheck,
   ChevronRight,
   ExternalLink,
-  MapPin
+  MapPin,
+  Lock
 } from 'lucide-react';
 
 export default function App() {
-  // Navigation & Active View state
-  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard', 'map', 'staff'
-  const [userRole, setUserRole] = useState(localStorage.getItem('civicshield_staff_role') || 'citizen');
+  // Authentication & Staff User session
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('civicshield_staff_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Navigation & Active View state: 'dashboard', 'map', 'staff', 'login'
+  const [activeView, setActiveView] = useState('dashboard');
+  const [userRole, setUserRole] = useState(() => {
+    try {
+      const saved = localStorage.getItem('civicshield_staff_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed?.role || 'citizen';
+      }
+    } catch {}
+    return 'citizen';
+  });
   const [viewLayout, setViewLayout] = useState('grid'); // 'grid' or 'list'
 
   // Incident & Stats Data state
@@ -154,6 +175,25 @@ export default function App() {
     setSelectedStatus('');
   };
 
+  const handleLoginSuccess = (user) => {
+    setAuthUser(user);
+    setUserRole(user.role);
+    setActiveView('staff');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {}
+    localStorage.removeItem('civicshield_session_token');
+    localStorage.removeItem('civicshield_staff_user');
+    localStorage.removeItem('civicshield_staff_role');
+    localStorage.removeItem('civicshield_staff_id');
+    setAuthUser(null);
+    setUserRole('citizen');
+    setActiveView('dashboard');
+  };
+
   const hasActiveFilters = Boolean(search || selectedCategory || selectedUrgency || selectedStatus);
 
   return (
@@ -165,8 +205,12 @@ export default function App() {
         onOpenTrack={() => setTrackModalOpen(true)}
         activeView={activeView}
         setActiveView={setActiveView}
-        userRole={userRole}
-        setUserRole={setUserRole}
+        authUser={authUser}
+        onOpenLogin={() => {
+          soundFx.playClick();
+          setActiveView('login');
+        }}
+        onLogout={handleLogout}
       />
 
       {/* 2. Top Municipal Dispatch Status Bar */}
@@ -201,16 +245,43 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
         {/* ============================================================== */}
-        {/* VIEW A: STAFF & DISPATCHER PORTAL */}
+        {/* VIEW A: DEDICATED LOGIN PORTAL FOR ADMIN & FIELD CREW */}
         {/* ============================================================== */}
-        {activeView === 'staff' ? (
-          <StaffPortal
-            userRole={userRole}
-            setUserRole={setUserRole}
-            onSelectIncident={handleSelectIncident}
-            refreshTrigger={refreshTrigger}
-            onIncidentUpdated={handleIncidentUpdated}
+        {activeView === 'login' ? (
+          <StaffLogin
+            onLoginSuccess={handleLoginSuccess}
+            onCancel={() => setActiveView('dashboard')}
           />
+        ) : activeView === 'staff' ? (
+          /* ============================================================== */
+          /* VIEW B: STAFF & DISPATCHER PORTAL (AUTH PROTECTED) */
+          /* ============================================================== */
+          !authUser ? (
+            <div className="space-y-4">
+              <div className="p-3.5 bg-amber-950/50 border border-amber-800/80 rounded-xl text-xs text-amber-200 flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
+                  <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    <strong>Restricted Municipal Terminal:</strong> You must authenticate with valid Administrator, Dispatcher, or Field Crew credentials to access operational dispatch.
+                  </span>
+                </div>
+              </div>
+              <StaffLogin
+                onLoginSuccess={handleLoginSuccess}
+                onCancel={() => setActiveView('dashboard')}
+              />
+            </div>
+          ) : (
+            <StaffPortal
+              userRole={userRole}
+              setUserRole={setUserRole}
+              onSelectIncident={handleSelectIncident}
+              refreshTrigger={refreshTrigger}
+              onIncidentUpdated={handleIncidentUpdated}
+              authUser={authUser}
+              onLogout={handleLogout}
+            />
+          )
         ) : activeView === 'map' ? (
           /* ============================================================== */
           /* VIEW B: DEDICATED FULL LIVE MAP RADAR */

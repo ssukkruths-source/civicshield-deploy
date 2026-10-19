@@ -1,11 +1,21 @@
 export const INITIAL_STAFF = [
   {
+    id: 'staff-admin',
+    full_name: 'Commander Sarah Jenkins',
+    email: 'admin@civicshield.gov',
+    role: 'admin',
+    badge_number: 'ADM-001',
+    department: 'Municipal Operations Bureau',
+    password: 'admin'
+  },
+  {
     id: 'staff-001',
     full_name: 'Officer Davis',
     email: 'davis@civicshield.gov',
     role: 'dispatcher',
     badge_number: 'DSP-104',
-    department: 'Central Emergency Dispatch'
+    department: 'Central Emergency Dispatch',
+    password: 'admin'
   },
   {
     id: 'staff-002',
@@ -13,7 +23,8 @@ export const INITIAL_STAFF = [
     email: 'rivera@civicshield.gov',
     role: 'field_crew',
     badge_number: 'FC-402',
-    department: 'Electrical & Utility Infrastructure'
+    department: 'Electrical & Utility Infrastructure',
+    password: 'crew'
   },
   {
     id: 'staff-003',
@@ -21,7 +32,8 @@ export const INITIAL_STAFF = [
     email: 'chen@civicshield.gov',
     role: 'field_crew',
     badge_number: 'FC-209',
-    department: 'Public Works & Roadways'
+    department: 'Public Works & Roadways',
+    password: 'crew'
   },
   {
     id: 'staff-004',
@@ -29,7 +41,8 @@ export const INITIAL_STAFF = [
     email: 'vance@civicshield.gov',
     role: 'field_crew',
     badge_number: 'FC-311',
-    department: 'Hydraulics & Drainage'
+    department: 'Hydraulics & Drainage',
+    password: 'crew'
   }
 ];
 

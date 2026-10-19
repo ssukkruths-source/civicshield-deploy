@@ -1,23 +1,24 @@
 const API_BASE = '/api';
 
 /**
- * Fetch with JSON headers and staff role demo credentials
+ * Fetch with JSON headers and staff session credentials
  */
 async function request(endpoint, options = {}) {
+  const sessionToken = localStorage.getItem('civicshield_session_token');
   const staffRole = localStorage.getItem('civicshield_staff_role') || 'citizen';
-  const staffId = localStorage.getItem('civicshield_staff_id') || 'staff-001';
-  const supabaseToken = localStorage.getItem('civicshield_auth_token');
+  const staffId = localStorage.getItem('civicshield_staff_id') || '';
 
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
 
-  if (supabaseToken) {
-    headers['Authorization'] = `Bearer ${supabaseToken}`;
-  } else if (staffRole && staffRole !== 'citizen') {
-    headers['X-Staff-Role'] = staffRole;
-    headers['X-Staff-Id'] = staffId;
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
+    if (staffRole && staffRole !== 'citizen') {
+      headers['X-Staff-Role'] = staffRole;
+      headers['X-Staff-Id'] = staffId;
+    }
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -38,6 +39,20 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  // Authentication
+  login: ({ identifier, password, expectedRole }) =>
+    request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password, expectedRole }),
+    }),
+
+  getMe: () => request('/auth/me'),
+
+  logout: () =>
+    request('/auth/logout', {
+      method: 'POST',
+    }),
+
   // Health
   getHealth: () => request('/health'),
 
@@ -66,7 +81,7 @@ export const api = {
       body: JSON.stringify(reportData),
     }),
 
-  // Staff operations
+  // Protected staff operations
   updateStatus: (id, status, notes = '') =>
     request(`/incidents/${id}/status`, {
       method: 'PATCH',

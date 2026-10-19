@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import incidentsRouter from './routes/incidents.js';
 import statsRouter from './routes/stats.js';
 import staffRouter from './routes/staff.js';
+import authRouter from './routes/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { isConnected } from './config/supabase.js';
 
@@ -41,6 +42,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Primary API Routes
+app.use('/api/auth', authRouter);
 app.use('/api/incidents', incidentsRouter);
 app.use('/api/dashboard/stats', statsRouter);
 app.use('/api/staff', staffRouter);
