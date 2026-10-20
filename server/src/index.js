@@ -21,7 +21,6 @@ app.use(cors({
   methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Staff-Role', 'X-Staff-Id']
 }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -39,10 +38,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.use('/api/auth', authRouter);
-app.use('/api/incidents', incidentsRouter);
-app.use('/api/dashboard/stats', statsRouter);
-app.use('/api/staff', staffRouter);
+const resolveModule = (moduleValue) => moduleValue?.default ?? moduleValue;
+app.use('/api/auth', resolveModule(authRouter));
+app.use('/api/incidents', resolveModule(incidentsRouter));
+app.use('/api/dashboard/stats', resolveModule(statsRouter));
+app.use('/api/staff', resolveModule(staffRouter));
+app.use(resolveModule(errorHandler));
 
 app.use((req, res) => {
   res.status(404).json({
@@ -51,9 +52,6 @@ app.use((req, res) => {
   });
 });
 
-app.use(errorHandler);
-
-// Only open a local HTTP listener when this file is run directly.
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   app.listen(PORT, () => {
     console.log(`CivicShield API running at http://localhost:${PORT}`);
