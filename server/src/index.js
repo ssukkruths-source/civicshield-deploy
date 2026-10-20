@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'node:url';
 import incidentsRouter from './routes/incidents.js';
 import statsRouter from './routes/stats.js';
 import staffRouter from './routes/staff.js';
@@ -38,7 +37,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const resolveModule = (moduleValue) => moduleValue?.default ?? moduleValue;
+const resolveModule = (moduleValue) => {
+  let resolved = moduleValue;
+  while (resolved && typeof resolved === 'object' && 'default' in resolved) resolved = resolved.default;
+  return resolved;
+};
 app.use('/api/auth', resolveModule(authRouter));
 app.use('/api/incidents', resolveModule(incidentsRouter));
 app.use('/api/dashboard/stats', resolveModule(statsRouter));
@@ -52,7 +55,7 @@ app.use((req, res) => {
   });
 });
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.env.NETLIFY !== 'true') {
   app.listen(PORT, () => {
     console.log(`CivicShield API running at http://localhost:${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);
