@@ -6,7 +6,15 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "test:api": "cd server && node test_flows.js",
-    "build:client": "cd client && npm run build"
+    "build:client": "npm --prefix client install && npm --prefix client run build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "serverless-http": "^3.2.0"
   },
   "keywords": ["civicshield", "civic-tech", "govtech", "supabase", "react", "express"],
   "author": "CivicShield",
