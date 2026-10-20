@@ -40,11 +40,6 @@ L.Icon.Default.mergeOptions({
 
 // Map Tile Styles
 const TILE_LAYERS = {
-  streets: {
-    name: 'Clean Positron',
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CartoDB &copy; OpenStreetMap contributors'
-  },
   googleStreets: {
     name: 'Google Streets',
     url: 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
@@ -54,11 +49,6 @@ const TILE_LAYERS = {
     name: 'Google Satellite',
     url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
     attribution: '&copy; Google Maps Satellite'
-  },
-  dark: {
-    name: 'Dark Contrast',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CartoDB'
   }
 };
 
@@ -183,7 +173,7 @@ export default function IncidentMap({
   onIncidentUpdated, 
   focusedIncident 
 }) {
-  const [activeTileStyle, setActiveTileStyle] = useState('streets');
+  const [activeTileStyle, setActiveTileStyle] = useState('googleStreets');
   const [filterUrgency, setFilterUrgency] = useState('ALL');
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -352,14 +342,6 @@ export default function IncidentMap({
           {/* Map Layer Style Switcher */}
           <div className="flex items-center bg-[#F0F4F8] p-1 rounded-xl border border-[#E4E9EF] text-xs">
             <button
-              onClick={() => setActiveTileStyle('streets')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                activeTileStyle === 'streets' ? 'bg-white text-[#183B56] shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
-              }`}
-            >
-              Positron
-            </button>
-            <button
               onClick={() => setActiveTileStyle('googleStreets')}
               className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 activeTileStyle === 'googleStreets' ? 'bg-white text-[#183B56] shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
@@ -374,14 +356,6 @@ export default function IncidentMap({
               }`}
             >
               Satellite
-            </button>
-            <button
-              onClick={() => setActiveTileStyle('dark')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                activeTileStyle === 'dark' ? 'bg-[#183B56] text-white shadow-xs' : 'text-[#697586] hover:text-[#172B3A]'
-              }`}
-            >
-              Dark
             </button>
           </div>
 

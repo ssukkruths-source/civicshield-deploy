@@ -22,44 +22,90 @@ import {
   MessageSquare,
   Truck,
   Sparkles,
-  Zap
+  Zap,
+  UserPlus,
+  Loader2,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { getCategoryIcon, getStatusStyle, getUrgencyStyle, formatTimeAgo } from './IncidentCard.jsx';
 import { soundFx } from '../services/soundFx.js';
+import { api } from '../services/api.js';
 
 const STATUS_STEPS = ['Submitted', 'Acknowledged', 'Dispatched', 'On Site', 'Resolved'];
 
-export default function IncidentDetailsModal({ incident, onClose, onRefresh }) {
+export default function IncidentDetailsModal({ 
+  incident, 
+  onClose, 
+  onRefresh,
+  authUser,
+  userRole = 'citizen',
+  onQuickSwitchRole
+}) {
+  const [activeIncident, setActiveIncident] = useState(incident);
   const [copied, setCopied] = useState(false);
   const [hasVerified, setHasVerified] = useState(false);
   const [verifyCount, setVerifyCount] = useState(0);
   const [citizenNotes, setCitizenNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
-  const [showRadioChatter, setShowRadioChatter] = useState(true);
 
-  if (!incident) return null;
+  // Operational Action States
+  const [staffList, setStaffList] = useState([]);
+  const [selectedCrewId, setSelectedCrewId] = useState('');
+  const [verificationNotes, setVerificationNotes] = useState('');
+  const [resolutionNotes, setResolutionNotes] = useState('');
+  const [resolutionPhoto, setResolutionPhoto] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState('');
+  const [actionError, setActionError] = useState('');
+  
+  // Toggles for inline action forms
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
+  const [showVerifyForm, setShowVerifyForm] = useState(false);
+  const [showResolveForm, setShowResolveForm] = useState(false);
 
-  const storageKey = `cs_verified_${incident.id || incident.reference_id}`;
+  useEffect(() => {
+    setActiveIncident(incident);
+  }, [incident]);
+
+  if (!activeIncident) return null;
+
+  const storageKey = `cs_verified_${activeIncident.id || activeIncident.reference_id}`;
 
   useEffect(() => {
     // Load local verification state
     const alreadyVerified = localStorage.getItem(storageKey) === 'true';
     setHasVerified(alreadyVerified);
-    setVerifyCount(incident.upvotes || (alreadyVerified ? 4 : 3));
+    setVerifyCount(activeIncident.upvotes || (alreadyVerified ? 4 : 3));
 
     // Simulated community field notes
     setCitizenNotes([
       { id: 1, author: 'Citizen Reporter', time: '18 mins ago', text: 'Hazard still active. Cones visible around pedestrian path.' }
     ]);
-  }, [incident]);
+  }, [activeIncident]);
 
-  const CategoryIcon = getCategoryIcon(incident.category);
+  // Load field crew directory for assignment
+  useEffect(() => {
+    async function loadCrews() {
+      try {
+        const res = await api.getStaffDirectory();
+        if (res && res.data) {
+          setStaffList(res.data.filter(s => s.role === 'field_crew'));
+        }
+      } catch (err) {
+        console.warn('Could not load staff directory in modal:', err);
+      }
+    }
+    loadCrews();
+  }, []);
+
+  const CategoryIcon = getCategoryIcon(activeIncident.category);
 
   const handleCopyId = () => {
     soundFx.playClick();
-    navigator.clipboard.writeText(incident.reference_id);
+    navigator.clipboard.writeText(activeIncident.reference_id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -86,12 +132,107 @@ export default function IncidentDetailsModal({ incident, onClose, onRefresh }) {
     setNewNote('');
   };
 
-  // Determine current step index in lifecycle
-  const currentStepIndex = STATUS_STEPS.indexOf(incident.status);
-  const isRejected = incident.status === 'Rejected';
+  // Operational Action Handlers
+  const handleAcknowledge = async () => {
+    soundFx.playClick();
+    setActionLoading(true);
+    setActionError('');
+    try {
+      await api.updateStatus(activeIncident.id, 'Acknowledged', 'Incident reviewed by Dispatcher triage.');
+      soundFx.playSuccess();
+      setActionSuccess('Incident acknowledged by Central Dispatch.');
+      const fresh = await api.getIncidentById(activeIncident.id);
+      if (fresh && fresh.data) setActiveIncident(fresh.data);
+      if (onRefresh) onRefresh();
+      setTimeout(() => setActionSuccess(''), 3500);
+    } catch (err) {
+      setActionError(err.message || 'Failed to acknowledge incident.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-  const lat = parseFloat(incident.latitude) || 37.7749;
-  const lng = parseFloat(incident.longitude) || -122.4194;
+  const handleAssignCrew = async () => {
+    if (!selectedCrewId) {
+      setActionError('Please select a certified field crew unit from the directory.');
+      return;
+    }
+    soundFx.playClick();
+    setActionLoading(true);
+    setActionError('');
+    try {
+      await api.assignCrew(activeIncident.id, selectedCrewId);
+      soundFx.playSuccess();
+      setActionSuccess('Field crew assigned and dispatched to hazard site.');
+      setShowAssignDropdown(false);
+      setSelectedCrewId('');
+      const fresh = await api.getIncidentById(activeIncident.id);
+      if (fresh && fresh.data) setActiveIncident(fresh.data);
+      if (onRefresh) onRefresh();
+      setTimeout(() => setActionSuccess(''), 3500);
+    } catch (err) {
+      setActionError(err.message || 'Failed to assign crew.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRecordVerification = async () => {
+    const notes = verificationNotes.trim() || 'Arrived on scene, cordoned off danger area, utility isolation confirmed.';
+    soundFx.playClick();
+    setActionLoading(true);
+    setActionError('');
+    try {
+      await api.recordVerification(activeIncident.id, notes);
+      soundFx.playSuccess();
+      setActionSuccess('On-site verification and hazard assessment logged.');
+      setShowVerifyForm(false);
+      setVerificationNotes('');
+      const fresh = await api.getIncidentById(activeIncident.id);
+      if (fresh && fresh.data) setActiveIncident(fresh.data);
+      if (onRefresh) onRefresh();
+      setTimeout(() => setActionSuccess(''), 3500);
+    } catch (err) {
+      setActionError(err.message || 'Failed to record on-site verification.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRecordResolution = async () => {
+    const notes = resolutionNotes.trim() || 'Repairs completed, perimeter safety verified, service restored.';
+    soundFx.playClick();
+    setActionLoading(true);
+    setActionError('');
+    try {
+      await api.recordResolution(activeIncident.id, {
+        notes,
+        photo_url: resolutionPhoto
+      });
+      soundFx.playSuccess();
+      setActionSuccess('Hazard marked as Resolved. Incident closed.');
+      setShowResolveForm(false);
+      setResolutionNotes('');
+      setResolutionPhoto('');
+      const fresh = await api.getIncidentById(activeIncident.id);
+      if (fresh && fresh.data) setActiveIncident(fresh.data);
+      if (onRefresh) onRefresh();
+      setTimeout(() => setActionSuccess(''), 3500);
+    } catch (err) {
+      setActionError(err.message || 'Failed to record resolution.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Determine current step index in lifecycle
+  const currentStepIndex = STATUS_STEPS.indexOf(activeIncident.status);
+  const isRejected = activeIncident.status === 'Rejected';
+  const isDispatcher = userRole === 'dispatcher' || authUser?.role === 'dispatcher' || authUser?.role === 'admin';
+  const isCrew = userRole === 'field_crew' || authUser?.role === 'field_crew';
+
+  const lat = parseFloat(activeIncident.latitude) || 37.7749;
+  const lng = parseFloat(activeIncident.longitude) || -122.4194;
   const mapPos = [lat, lng];
 
   const markerPin = L.divIcon({
@@ -119,19 +260,19 @@ export default function IncidentDetailsModal({ incident, onClose, onRefresh }) {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-mono text-xs font-bold text-[#183B56] bg-[#F7F8FA] px-2.5 py-0.5 rounded-md border border-[#E4E9EF]">
-                  {incident.reference_id}
+                  {activeIncident.reference_id}
                 </span>
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getUrgencyStyle(incident.urgency)}`}>
-                  {incident.urgency} Urgency
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getUrgencyStyle(activeIncident.urgency)}`}>
+                  {activeIncident.urgency} Urgency
                 </span>
-                {incident.is_demo && (
+                {activeIncident.is_demo && (
                   <span className="text-[10px] uppercase font-semibold bg-[#F7F8FA] text-[#697586] px-2 py-0.5 rounded-full border border-[#E4E9EF]">
                     Demo Record
                   </span>
                 )}
               </div>
               <h2 className="text-base sm:text-lg font-bold text-[#183B56] mt-1 line-clamp-1">
-                {incident.title}
+                {activeIncident.title}
               </h2>
             </div>
           </div>

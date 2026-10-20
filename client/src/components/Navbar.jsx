@@ -26,6 +26,8 @@ export default function Navbar({
   activeView, 
   setActiveView, 
   authUser,
+  userRole,
+  onQuickSwitchRole,
   onOpenLogin,
   onLogout
 }) {
@@ -45,8 +47,8 @@ export default function Navbar({
   }, []);
 
   const isStaffLoggedIn = !!authUser;
-  const isFieldCrew = authUser?.role === 'field_crew';
-  const isAdminOrDispatcher = authUser?.role === 'admin' || authUser?.role === 'dispatcher';
+  const isFieldCrew = authUser?.role === 'field_crew' || userRole === 'field_crew';
+  const isAdminOrDispatcher = authUser?.role === 'admin' || authUser?.role === 'dispatcher' || userRole === 'dispatcher';
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#E4E9EF] shadow-[0_1px_3px_0_rgba(24,59,86,0.05)]">
@@ -111,35 +113,45 @@ export default function Navbar({
               <span>Geospatial Radar</span>
             </button>
 
-            {/* Restricted Staff Console: ONLY VISIBLE IF AUTHENTICATED */}
-            {isStaffLoggedIn && (
-              <button
-                onClick={() => {
-                  soundFx.playRadioChirp();
-                  setActiveView('staff');
-                }}
-                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-all ${
-                  activeView === 'staff'
-                    ? isFieldCrew 
-                      ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E] shadow-sm font-semibold' 
-                      : 'bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED] shadow-sm font-semibold'
-                    : 'text-[#697586] hover:text-[#172B3A] hover:bg-white/60'
-                }`}
-              >
-                {isFieldCrew ? (
+            {/* Municipal Dispatch Console / Field Workstation: ALWAYS ACCESSIBLE */}
+            <button
+              onClick={() => {
+                soundFx.playRadioChirp();
+                setActiveView('staff');
+              }}
+              className={`px-3.5 py-1.5 text-xs font-medium rounded-lg flex items-center space-x-1.5 transition-all ${
+                activeView === 'staff'
+                  ? isFieldCrew 
+                    ? 'bg-[#FEF9EE] text-[#D99A26] border border-[#F9DE9E] shadow-sm font-semibold' 
+                    : 'bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED] shadow-sm font-semibold'
+                  : 'text-[#697586] hover:text-[#172B3A] hover:bg-white/60'
+              }`}
+              title="Access Municipal Dispatcher & Field Crew Console"
+            >
+              {isStaffLoggedIn ? (
+                isFieldCrew ? (
                   <>
                     <UserCheck className="w-3.5 h-3.5 text-[#D99A26]" />
                     <span>Field Workstation</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#25855A] animate-pulse ml-0.5"></span>
                   </>
                 ) : (
                   <>
                     <Radio className="w-3.5 h-3.5 text-[#20A39E]" />
                     <span>Dispatch Console</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#25855A] animate-pulse ml-0.5"></span>
                   </>
-                )}
-                <span className="w-1.5 h-1.5 rounded-full bg-[#25855A] animate-pulse ml-0.5"></span>
-              </button>
-            )}
+                )
+              ) : (
+                <>
+                  <Radio className="w-3.5 h-3.5 text-[#356B8C]" />
+                  <span>Dispatch Console</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 font-bold ml-0.5">
+                    Staff
+                  </span>
+                </>
+              )}
+            </button>
           </nav>
 
           {/* Right Action Tools */}
@@ -331,22 +343,29 @@ export default function Navbar({
               </button>
             </div>
 
-            {isStaffLoggedIn && (
-              <button
-                onClick={() => {
-                  soundFx.playRadioChirp();
-                  setActiveView('staff');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED]"
-              >
-                <span className="flex items-center space-x-2">
-                  <Radio className="w-4 h-4 text-[#20A39E]" />
-                  <span>{isFieldCrew ? 'Field Response Terminal' : 'Municipal Dispatch Console'}</span>
+            <button
+              onClick={() => {
+                soundFx.playRadioChirp();
+                setActiveView('staff');
+                setMobileMenuOpen(false);
+              }}
+              className="w-full px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between bg-[#F0F6FA] text-[#183B56] border border-[#D0E1ED]"
+            >
+              <span className="flex items-center space-x-2">
+                <Radio className="w-4 h-4 text-[#20A39E]" />
+                <span>
+                  {isStaffLoggedIn
+                    ? (isFieldCrew ? 'Field Response Terminal' : 'Municipal Dispatch Console')
+                    : 'Municipal Dispatch Console'
+                  }
                 </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#25855A] text-white font-bold">ACTIVE</span>
-              </button>
-            )}
+              </span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                isStaffLoggedIn ? 'bg-[#25855A] text-white' : 'bg-amber-100 text-amber-800'
+              }`}>
+                {isStaffLoggedIn ? 'ACTIVE' : 'STAFF'}
+              </span>
+            </button>
 
             <button
               onClick={() => {

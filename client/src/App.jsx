@@ -63,6 +63,7 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, totalPages: 1 });
 
   // Filters & Search state
@@ -112,6 +113,7 @@ export default function App() {
 
       if (res.success && res.data) {
         setIncidents(res.data);
+        setLastSyncedAt(Date.now());
         if (res.pagination) {
           setPagination(res.pagination);
         }
@@ -130,6 +132,21 @@ export default function App() {
   useEffect(() => {
     fetchIncidents();
   }, [search, selectedCategory, selectedUrgency, selectedStatus, sortBy, pagination.page, refreshTrigger]);
+
+  // Keep the public feed current without requiring citizens to manually sync.
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setRefreshTrigger((previous) => previous + 1);
+      }
+    };
+    const interval = window.setInterval(refreshWhenVisible, 30000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, []);
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -181,6 +198,46 @@ export default function App() {
     setActiveView('staff');
   };
 
+  const handleQuickSwitchRole = (targetRole) => {
+    soundFx.playRadioChirp();
+    if (targetRole === 'dispatcher') {
+      const dispatcherUser = {
+        id: 'staff-001',
+        name: 'Officer Davis',
+        email: 'davis@civicshield.gov',
+        role: 'dispatcher',
+        badge_number: 'DSP-104',
+        department: 'Central Emergency Dispatch'
+      };
+      setAuthUser(dispatcherUser);
+      setUserRole('dispatcher');
+      localStorage.setItem('civicshield_staff_user', JSON.stringify(dispatcherUser));
+      localStorage.setItem('civicshield_staff_role', 'dispatcher');
+      localStorage.setItem('civicshield_staff_id', 'staff-001');
+      localStorage.setItem('civicshield_session_token', `cs_auth_staff-001_${Date.now()}`);
+      setActiveView('staff');
+    } else if (targetRole === 'field_crew') {
+      const crewUser = {
+        id: 'staff-002',
+        name: 'Alex Rivera (Rapid Crew #4)',
+        email: 'rivera@civicshield.gov',
+        role: 'field_crew',
+        badge_number: 'FC-402',
+        department: 'Electrical & Utility Infrastructure'
+      };
+      setAuthUser(crewUser);
+      setUserRole('field_crew');
+      localStorage.setItem('civicshield_staff_user', JSON.stringify(crewUser));
+      localStorage.setItem('civicshield_staff_role', 'field_crew');
+      localStorage.setItem('civicshield_staff_id', 'staff-002');
+      localStorage.setItem('civicshield_session_token', `cs_auth_staff-002_${Date.now()}`);
+      setActiveView('staff');
+    } else {
+      // Citizen
+      handleLogout();
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await api.logout();
@@ -206,6 +263,8 @@ export default function App() {
         activeView={activeView}
         setActiveView={setActiveView}
         authUser={authUser}
+        userRole={userRole}
+        onQuickSwitchRole={handleQuickSwitchRole}
         onOpenLogin={() => {
           soundFx.playClick();
           setActiveView('login');
@@ -215,23 +274,60 @@ export default function App() {
 
       {/* 2. Top Municipal Dispatch Status Bar */}
       <aside aria-label="System status telemetry" className="bg-white border-b border-[#E4E9EF] px-4 py-2 text-xs text-[#697586] shadow-2xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2 font-mono text-[11px] truncate">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
-            <span className="font-semibold text-[#183B56]">MUNICIPAL SERVICE DISPATCH:</span>
+            <span className="font-semibold text-[#183B56]">DISPATCH TELEMETRY:</span>
             <span className="text-[#697586] hidden sm:inline">
-              Operational • {stats?.total ?? 0} Total Logged • {stats?.critical ?? 0} Priority 1 Active • {stats?.resolved ?? 0} Closed
+              Operational • {stats?.total ?? 0} Logged • {stats?.critical ?? 0} Priority 1 • {stats?.resolved ?? 0} Closed
+              {lastSyncedAt && <span className="ml-2 text-[#188B87]">• Live feed synced {new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(lastSyncedAt)}</span>}
             </span>
           </div>
 
-          <div className="flex items-center space-x-3 text-[11px] text-[#697586] shrink-0 font-medium">
-            <span className="hidden md:inline">Coverage: Sectors 1–4, Harborfront, Northgate</span>
+          <div className="flex items-center flex-wrap gap-2.5 text-[11px] shrink-0 font-medium">
+            {/* Operational Persona Switcher */}
+            <div className="flex items-center space-x-1 bg-[#F7F8FA] p-0.5 rounded-lg border border-[#E4E9EF]">
+              <span className="text-[10px] font-bold text-[#697586] px-1.5 uppercase tracking-wider">Persona:</span>
+              <button
+                onClick={() => handleQuickSwitchRole('citizen')}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+                  userRole === 'citizen' && activeView !== 'staff'
+                    ? 'bg-white text-[#183B56] shadow-2xs' 
+                    : 'text-[#697586] hover:text-[#183B56]'
+                }`}
+              >
+                Citizen
+              </button>
+              <button
+                onClick={() => handleQuickSwitchRole('dispatcher')}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all flex items-center space-x-1 ${
+                  userRole === 'dispatcher' || (authUser?.role === 'dispatcher' && activeView === 'staff')
+                    ? 'bg-[#183B56] text-white shadow-2xs' 
+                    : 'text-[#697586] hover:text-[#183B56]'
+                }`}
+                title="Switch active session to Officer Davis (Central Dispatch)"
+              >
+                <span>⚡ Dispatcher</span>
+              </button>
+              <button
+                onClick={() => handleQuickSwitchRole('field_crew')}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all flex items-center space-x-1 ${
+                  userRole === 'field_crew' || (authUser?.role === 'field_crew' && activeView === 'staff')
+                    ? 'bg-[#20A39E] text-white shadow-2xs' 
+                    : 'text-[#697586] hover:text-[#183B56]'
+                }`}
+                title="Switch active session to Alex Rivera (Field Crew #4)"
+              >
+                <span>🛠️ Field Crew</span>
+              </button>
+            </div>
+
             <button
               onClick={() => {
                 soundFx.playClick();
                 handleRefresh();
               }}
-              className="text-[#183B56] hover:text-[#20A39E] flex items-center space-x-1.5 transition-colors font-medium bg-[#F7F8FA] hover:bg-[#EEF2F6] px-2 py-0.5 rounded border border-[#E4E9EF]"
+              className="text-[#183B56] hover:text-[#20A39E] flex items-center space-x-1.5 transition-colors font-medium bg-[#F7F8FA] hover:bg-[#EEF2F6] px-2 py-1 rounded border border-[#E4E9EF]"
               title="Refresh telemetry"
             >
               <RefreshCw className="w-3 h-3 text-[#20A39E]" />
@@ -658,20 +754,58 @@ export default function App() {
                                 {formatTimeAgo(incident.created_at)}
                               </td>
                               <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleFlyToLocation(incident);
-                                  }}
-                                  className="p-1.5 rounded-md text-[#697586] hover:text-[#20A39E] hover:bg-[#F7F8FA] transition-colors mr-1 border border-transparent hover:border-[#E4E9EF]"
-                                  title="Locate on map"
-                                  aria-label="Locate hazard on map"
-                                >
-                                  <Navigation className="w-3.5 h-3.5" />
-                                </button>
-                                <span className="text-xs font-semibold text-[#20A39E] hover:text-[#188B87]">
-                                  Inspect →
-                                </span>
+                                <div className="flex items-center justify-end space-x-1.5">
+                                  {incident.status === 'Submitted' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSelectIncident(incident);
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E6F7F6] text-[#188B87] border border-[#B2EBE8] hover:bg-[#20A39E] hover:text-white transition-colors"
+                                      title="Open for Dispatch Triage"
+                                    >
+                                      ⚡ Triage
+                                    </button>
+                                  )}
+                                  {incident.status === 'Dispatched' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSelectIncident(incident);
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-600 hover:text-white transition-colors"
+                                      title="Open for On-Site Verification"
+                                    >
+                                      🛠️ On-Site
+                                    </button>
+                                  )}
+                                  {incident.status === 'On Site' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSelectIncident(incident);
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EAF5EF] text-[#25855A] border border-[#C5E5D3] hover:bg-[#25855A] hover:text-white transition-colors"
+                                      title="Open for Resolution"
+                                    >
+                                      ✓ Resolve
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleFlyToLocation(incident);
+                                    }}
+                                    className="p-1.5 rounded-md text-[#697586] hover:text-[#20A39E] hover:bg-[#F7F8FA] transition-colors border border-transparent hover:border-[#E4E9EF]"
+                                    title="Locate on map"
+                                    aria-label="Locate hazard on map"
+                                  >
+                                    <Navigation className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="text-xs font-semibold text-[#20A39E] hover:text-[#188B87]">
+                                    Inspect →
+                                  </span>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -709,6 +843,9 @@ export default function App() {
         incident={selectedIncident}
         onClose={() => setSelectedIncident(null)}
         onRefresh={handleRefresh}
+        authUser={authUser}
+        userRole={userRole}
+        onQuickSwitchRole={handleQuickSwitchRole}
       />
 
       {/* 5. Minimal Institutional Footer */}
